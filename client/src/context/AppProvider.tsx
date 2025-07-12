@@ -4,6 +4,7 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 interface AppContextProps {
   user: string | null;
   setUser: (user: string | null) => void;
+  apiUrl: string | null;
 }
 
 // 2. Crea el contexto con valor inicial opcional (null hasta que se provea)
@@ -23,9 +24,10 @@ interface AppProviderProps {
 
 export default function AppProvider({ children }: AppProviderProps) {
   const [user, setUser] = useState<string | null>(null);
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   return (
-    <AppContext.Provider value={{ user, setUser }}>
+    <AppContext.Provider value={{ user, setUser, apiUrl }}>
       {children}
     </AppContext.Provider>
   );
