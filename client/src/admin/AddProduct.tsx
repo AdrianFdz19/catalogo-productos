@@ -26,10 +26,18 @@ const AddProduct: React.FC = () => {
 	const handleChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
 	) => {
-		const { name, value, type, checked } = e.target;
+		const { name, value, type } = e.target;
+
+		const isCheckbox = type === 'checkbox';
+		const inputValue = isCheckbox
+			? (e.target as HTMLInputElement).checked // 👈 Cast seguro
+			: name === 'price' || name === 'stock'
+				? Number(value)
+				: value;
+
 		setFormData((prev) => ({
 			...prev,
-			[name]: type === 'checkbox' ? checked : name === 'price' || name === 'stock' ? Number(value) : value,
+			[name]: inputValue,
 		}));
 	};
 

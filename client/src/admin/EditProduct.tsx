@@ -12,7 +12,7 @@ const EditProduct: React.FC = () => {
         price: 0,
         category: '',
         stock: 0,
-        imageUrl: [],
+        imageUrls: [],
         featured: false,
         tags: []
     });
@@ -20,10 +20,18 @@ const EditProduct: React.FC = () => {
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value, type } = e.target;
+
+        const isCheckbox = type === 'checkbox';
+        const inputValue = isCheckbox
+            ? (e.target as HTMLInputElement).checked // 👈 Cast seguro
+            : name === 'price' || name === 'stock'
+                ? Number(value)
+                : value;
+
         setFormData((prev) => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : name === 'price' || name === 'stock' ? Number(value) : value,
+            [name]: inputValue,
         }));
     };
 
@@ -34,16 +42,16 @@ const EditProduct: React.FC = () => {
     };
 
     const nextImage = () => {
-        if (!formData.imageUrl.length) return;
+        if (!formData.imageUrls.length) return;
         setCurrentImageIndex((prev) =>
-            prev < formData.imageUrl.length - 1 ? prev + 1 : 0
+            prev < formData.imageUrls.length - 1 ? prev + 1 : 0
         );
     };
 
     const prevImage = () => {
-        if (!formData.imageUrl.length) return;
+        if (!formData.imageUrls.length) return;
         setCurrentImageIndex((prev) =>
-            prev > 0 ? prev - 1 : formData.imageUrl.length - 1
+            prev > 0 ? prev - 1 : formData.imageUrls.length - 1
         );
     };
 
@@ -205,12 +213,12 @@ const EditProduct: React.FC = () => {
                         <div className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition flex flex-col">
                             <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden">
                                 <img
-                                    src={formData.imageUrl[currentImageIndex] || ''}
+                                    src={formData.imageUrls[currentImageIndex] ? URL.createObjectURL(formData.imageUrls[currentImageIndex]) : ''}
                                     alt={formData.name}
                                     className="w-full h-full object-cover transition-all"
                                 />
 
-                                {formData.imageUrl.length > 1 && (
+                                {formData.imageUrls.length > 1 && (
                                     <>
                                         <button
                                             onClick={prevImage}
