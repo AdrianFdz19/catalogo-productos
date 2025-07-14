@@ -29,9 +29,14 @@ const Products: React.FC = () => {
 			<div className="max-w-6xl mx-auto">
 				<h2 className="text-3xl font-bold mb-6 text-gray-800">Productos</h2>
 				<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-					{products?.map((product) => (
-						<ProductCard key={product.id} product={product} />
-					))}
+					{Array.isArray(products) ? (
+						products.map((product) => (
+							<ProductCard key={product.id} product={product} />
+						))
+					) : (
+						<p className="text-gray-600 col-span-full">No se pudieron cargar los productos.</p>
+					)}
+
 				</div>
 			</div>
 		</section>
