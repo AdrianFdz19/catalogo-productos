@@ -14,7 +14,7 @@ const Products: React.FC = () => {
 			try {
 				const response = await fetch(`${apiUrl}/products/featured`);
 				const result = await response.json();
-				/* console.log('productos: ', result); */
+				console.log('productos: ', result);
 				setProducts(result);
 			} catch (err) {
 				console.error(err);
