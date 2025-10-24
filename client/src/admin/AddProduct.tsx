@@ -37,7 +37,7 @@ const AddProduct: React.FC = () => {
 
 		setFormData((prev) => ({
 			...prev,
-			[name]: inputValue,
+			[name as keyof ProductForm]: inputValue,
 		}));
 	};
 
@@ -51,13 +51,12 @@ const AddProduct: React.FC = () => {
 			if (formData.imageUrls.length > 0) {
 				uploadedUrls = await Promise.all(
 					formData.imageUrls.map(async (file: File) => {
-						return await uploadImage(file);
+						return await uploadImage(file, apiUrl);
 					})
 				);
 			}
 
 			console.log('✅ URLs subidas:', uploadedUrls);
-			// Aquí terminaría la lógica por ahora
 
 			/* Subir el articulo completo con la URL de las imagenes */
 			const productToSend = {

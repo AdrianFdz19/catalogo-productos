@@ -186,8 +186,6 @@ export const addProduct = async (req, res) => {
             imageUrls, // array de strings ya subidas a Cloudinary
         } = req.body;
 
-        console.log(req.body);
-
         if (!name || !description || !price || !category || !stock || !imageUrls?.length) {
             return res.status(400).json({ message: 'Faltan campos obligatorios o imágenes.' });
         }

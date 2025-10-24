@@ -1,0 +1,20 @@
+import {config} from 'dotenv';
+
+config();
+
+export const env = {
+  nodeEnv: process.env.NODE_ENV,
+  db: {
+    user: process.env.DB_USER,
+    host: process.env.DB_HOST,
+    name: process.env.DB_NAME,
+    password: process.env.DB_PASSWORD,
+    port: process.env.DB_PORT,
+    url: process.env.DATABASE_URL
+  },
+  cloudinary: {
+    name: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET
+  }
+};

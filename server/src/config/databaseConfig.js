@@ -1,21 +1,20 @@
-import { config } from 'dotenv';
 import pkg from 'pg'
-const { Pool } = pkg;
-config();
+const {Pool} = pkg;
+import { env } from './config.js';
 
 export let pool;
 
-if (process.env.NODE_ENV === 'production') {
+if (env.nodeEnv === 'production') {
     pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: env.db.url,
     })
 } else {
     pool = new Pool({
-        user: process.env.DB_USER,
-        host: process.env.DB_HOST,
-        database: process.env.DB_NAME,
-        password: process.env.DB_PASSWORD,
-        port: Number(process.env.DB_PORT),
+        user: env.db.user,
+        host: env.db.host,
+        database: env.db.name,
+        password: env.db.password,
+        port: Number(env.db.port),
     });
 };
 

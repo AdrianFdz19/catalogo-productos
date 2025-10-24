@@ -26,4 +26,15 @@ app.get('/testdb', async(req, res) => {
     }
 })
 
+app.get('/database/info', async(req, res) => {
+    try {
+        const query = 'SELECT * FROM database_info';
+        const response = await pool.query(query);
+        const result = response.rows[0].info;
+        res.json(result);
+    } catch(err) {
+        console.error(err);
+    }
+});
+
 export default app;
