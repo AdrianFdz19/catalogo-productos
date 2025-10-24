@@ -264,47 +264,48 @@ const AddProduct: React.FC = () => {
 					<div className="flex-1">
 						<p className="text-sm text-gray-600 mb-2">Vista previa</p>
 						<div className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition flex flex-col">
-							<div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden">
-								<img
-									src={formData.imageUrls[currentImageIndex] ? URL.createObjectURL(formData.imageUrls[currentImageIndex]) : ''}
-									alt={formData.name}
-									className="w-full h-full object-cover transition-all"
-								/>
-
-								{formData.imageUrls.length > 1 && (
+							<div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+								{formData.imageUrls.length > 0 ? (
 									<>
-										<button
-											onClick={prevImage}
-											className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition 
-											cursor-pointer"
-										>
-											<ChevronLeft size={20} />
-										</button>
+										<img
+											src={URL.createObjectURL(formData.imageUrls[currentImageIndex])}
+											alt={formData.name || 'Vista previa'}
+											className="w-full h-full object-cover transition-all"
+										/>
 
-										<button
-											onClick={nextImage}
-											className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition
-											cursor-pointer"
-										>
-											<ChevronRight size={20} />
-										</button>
+										{formData.imageUrls.length > 1 && (
+											<>
+												<button
+													onClick={prevImage}
+													className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition cursor-pointer"
+												>
+													<ChevronLeft size={20} />
+												</button>
+
+												<button
+													onClick={nextImage}
+													className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition cursor-pointer"
+												>
+													<ChevronRight size={20} />
+												</button>
+											</>
+										)}
 									</>
+								) : (
+									<span className="text-gray-400 text-sm">No hay imagen</span>
 								)}
 							</div>
 
-							<h3 className="text-lg font-semibold text-gray-900">
-								{formData.name}
-							</h3>
-							<p
-								className="text-gray-600 text-sm break-words whitespace-pre-wrap"
-							>
+							<h3 className="text-lg font-semibold text-gray-900">{formData.name || 'Nombre del producto'}</h3>
+							<p className="text-gray-600 text-sm break-words whitespace-pre-wrap">
 								{formData.description.length > 200
 									? formData.description.slice(0, 200) + '...'
-									: formData.description}
+									: formData.description || 'Descripción del producto'}
 							</p>
 							<p className="text-blue-600 font-bold mt-2">${formData.price}</p>
 							<p className="text-xs text-gray-400 mt-auto">Stock: {formData.stock}</p>
 						</div>
+
 					</div>
 				</div>
 			</div>

@@ -4,6 +4,7 @@ config();
 
 export const env = {
   nodeEnv: process.env.NODE_ENV,
+  secret: process.env.JWT_SECRET,
   db: {
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
