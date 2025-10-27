@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
 import { useAppContext } from '../context/AppProvider';
+import { useNavigate } from 'react-router-dom';
 
 interface SignUpForm {
     username: string;
@@ -10,7 +11,7 @@ interface SignUpForm {
 }
 
 const SignUp: React.FC = () => {
-    const { apiUrl } = useAppContext();
+    const { apiUrl, setUser } = useAppContext();
     const [formData, setFormData] = useState<SignUpForm>({
         username: '',
         email: '',
@@ -22,6 +23,7 @@ const SignUp: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const navigate = useNavigate();
 
     const handleChange = (
         e: ChangeEvent<HTMLInputElement>
@@ -49,6 +51,7 @@ const SignUp: React.FC = () => {
             const response = await fetch(`${apiUrl}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(formData)
             });
 
@@ -56,7 +59,9 @@ const SignUp: React.FC = () => {
                 console.log('Formulario enviado:', formData);
                 const data = await response.json();
                 console.log(data);
-                
+
+                setUser(data.user);
+
                 setSuccess(true);
                 setFormData({
                     username: '',
@@ -65,8 +70,15 @@ const SignUp: React.FC = () => {
                     password: '',
                     confirmPassword: '',
                 });
+
+                setTimeout(() => {
+                    navigate(`/`, { replace: true });
+                }, 2500);
+
             } else {
-                console.error(`Client error:.`);
+                const errData = await response.json().catch(() => ({}));
+                console.error(`Client error:`, errData.message || response.statusText);
+                setError(errData.message || 'Error al registrar usuario');
             }
 
         } catch (err) {

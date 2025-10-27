@@ -1,5 +1,6 @@
 import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom'; // si usas React Router
+import { useLocation, useNavigate } from 'react-router-dom'; // si usas React Router
+import { useAppContext } from '../context/AppProvider';
 
 interface SignInForm {
   usernameOrEmail: string;
@@ -7,6 +8,9 @@ interface SignInForm {
 }
 
 const SignIn: React.FC = () => {
+  const location = useLocation();
+  const from = location.state?.from || '/admin/products';
+  const { apiUrl, setUser } = useAppContext();
   const [formData, setFormData] = useState<SignInForm>({
     usernameOrEmail: '',
     password: '',
@@ -23,19 +27,37 @@ const SignIn: React.FC = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(false);
 
-    // Aquí iría la llamada a la API
-    console.log('Login con:', formData);
+    try {
+      const response = await fetch(`${apiUrl}/auth/signin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // 🔑 Enviar cookies
+        body: JSON.stringify(formData),
+      });
 
-    // Simulación de éxito
-    setSuccess(true);
-    setFormData({ usernameOrEmail: '', password: '' });
+      const data = await response.json();
 
-    // Redirigir a dashboard o página principal
-    setTimeout(() => navigate('/dashboard'), 1000);
+      if (!response.ok) {
+        setError(data.message || 'Error al iniciar sesión');
+        return;
+      }
+
+      setUser(data.user);
+      setSuccess(true);
+      setFormData({ usernameOrEmail: '', password: '' });
+
+      // Redirigir al dashboard o home
+      setTimeout(() => navigate(from, { replace: true }), 1500);
+
+    } catch (err) {
+      console.error(err);
+      setError('Error en la conexión con el servidor');
+    }
   };
 
   return (

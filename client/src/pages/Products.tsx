@@ -7,6 +7,8 @@ const Products: React.FC = () => {
 
 	const { apiUrl } = useAppContext();
 	const [products, setProducts] = useState<Product[] | null>(null);
+	const [search, setSearch] = useState('');
+	const [selectedCategory, setSelectedCategory] = useState('');
 
 	/* Efecto para recibir todos los productos */
 	useEffect(() => {
@@ -23,6 +25,12 @@ const Products: React.FC = () => {
 
 		fetchProducts();
 	}, []);
+
+	/* const filteredProducts = products.filter((p) => {
+		const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+		const matchesCategory = selectedCategory ? p.category === selectedCategory : true;
+		return matchesSearch && matchesCategory;
+	}); */
 
 	return (
 		<section className="w-full min-h-[100vh] px-4 py-8 bg-gray-50">

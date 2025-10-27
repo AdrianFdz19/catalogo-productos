@@ -3,8 +3,41 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../config/databaseConfig.js';
 import { env } from '../config/config.js';
 
-const JWT_SECRET = env.jwtSecret || 'supersecretkey';
 const JWT_EXPIRES_IN = '1d';
+
+export const getAuthUser = async (req, res) => {
+  try {
+    // Intentar obtener token desde cookie o header
+    const token = req.cookies?.token;
+    
+    if (!token) {
+      return res.status(401).json({ success: false, message: "No token provided" });
+    }
+
+    // Verificar token
+    const decoded = jwt.verify(token, 'secretkey');
+
+    // Buscar usuario en DB
+    const result = await pool.query(
+      'SELECT id, username, email, role, created_at FROM users WHERE id=$1',
+      [decoded.id]
+    );
+
+    const user = result.rows[0];
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Enviar usuario al frontend
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ message: 'Token inválido o expirado' });
+  }
+};
 
 // =======================================
 // Registro de usuario (SignUp)
@@ -32,7 +65,20 @@ export const signUp = async (req, res) => {
       [username, email, full_name, hashedPassword]
     );
 
-    const user = result.rows[0];
+    const userResult = result.rows[0];
+    const user = { id: userResult.id, username: userResult.username, email: userResult.email, role: userResult.role }
+
+    // Crear la token de sesion
+    const token = jwt.sign(user, 'secretkey', { expiresIn: JWT_EXPIRES_IN });
+
+    // Enviar el token en una cookie httpOnly
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: env.nodeEnv === 'production', // solo HTTPS en producción
+      sameSite: 'lax', // importante para proteger CSRF
+      maxAge: 3600 * 1000, // 1 hora
+    });
+
     res.status(201).json({ message: 'Usuario creado', user });
   } catch (err) {
     console.error(err);
@@ -47,7 +93,6 @@ export const signIn = async (req, res) => {
   const { usernameOrEmail, password } = req.body;
 
   try {
-    // Buscar usuario
     const result = await pool.query(
       'SELECT * FROM users WHERE username=$1 OR email=$2',
       [usernameOrEmail, usernameOrEmail]
@@ -58,30 +103,32 @@ export const signIn = async (req, res) => {
       return res.status(400).json({ message: 'Usuario no encontrado' });
     }
 
-    // Verificar contraseña
     const validPassword = await bcrypt.compare(password, user.hashed_password);
     if (!validPassword) {
       return res.status(400).json({ message: 'Contraseña incorrecta' });
     }
 
-    // Generar JWT
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      JWT_SECRET,
+      'secretkey',
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    // Enviar cookie HTTP-only
     res
       .cookie('token', token, {
         httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: env.nodeEnv === 'production',
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
       })
       .json({
         message: 'Inicio de sesión exitoso',
-        user: { id: user.id, username: user.username, role: user.role },
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
       });
   } catch (err) {
     console.error(err);
@@ -92,12 +139,13 @@ export const signIn = async (req, res) => {
 // =======================================
 // Cerrar sesión
 // =======================================
-export const signOut = (_req, res) => {
-  res
-    .clearCookie('token', {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: env.NODE_ENV === 'production',
-    })
-    .json({ message: 'Sesión cerrada' });
+export const signOut = (req, res) => {
+  console.log('el usuario desea desloguearse');
+  
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: env.nodeEnv === 'production',
+    sameSite: 'lax',
+  });
+  res.json({ success: true });
 };
