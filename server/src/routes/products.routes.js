@@ -1,15 +1,22 @@
 import express from 'express'
-import { addProduct, getAllProducts, getFeaturedProducts, getPaginatedProducts, getProductById } from '../controllers/products.controller.js';
+import { getAllProducts, getFeaturedProducts, getUserFavorites, getPaginatedProducts, getProductById, addToFavorites, removeFromFavorites, getFeaturedProductsServer } from '../controllers/products.controller.js';
+import { verifyToken } from '../middlewares/authMiddleware.js';
 const products = express.Router();
 
-products.get('/', getAllProducts);
+products.get('/', verifyToken, getAllProducts);
 
-products.get('/featured', getFeaturedProducts);
+products.get('/featured', verifyToken, getFeaturedProducts);
 
-products.get('/paginated', getPaginatedProducts);
+products.get('/featured-server' , getFeaturedProductsServer);
+
+products.get('/paginated', verifyToken, getPaginatedProducts);
+
+products.get('/favorites', verifyToken , getUserFavorites);
+
+products.post('/add-favorites', verifyToken , addToFavorites);
+
+products.post('/remove-favorites', verifyToken , removeFromFavorites);
 
 products.get('/:id', getProductById);
-
-products.post('/', addProduct);
 
 export default products;

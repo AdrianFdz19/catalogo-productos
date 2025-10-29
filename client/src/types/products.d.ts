@@ -7,6 +7,7 @@ export type Product = {
   stock: number;
   imageUrls: string[];
   featured?: boolean;
+  isFavorite: boolean;
 };
 
 export type MappedProduct = {

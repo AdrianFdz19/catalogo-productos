@@ -9,6 +9,7 @@ import SignUp from './auth/SignUp'
 import SignIn from './auth/SignIn'
 import ProtectedRoute from './admin/ProtectedRoute'
 import LayoutWithHeader from './layouts/LayoutWithHeader'
+import Favorites from './pages/Favorites'
 
 function App() {
 
@@ -21,6 +22,7 @@ function App() {
         <Route element={<LayoutWithHeader />} >
           <Route path='/' element={<Products />} ></Route>
           <Route path='/product/:id' element={<ProductDetail />} ></Route>
+          <Route path='/favoritos' element={<Favorites />} ></Route>
         </Route>
 
         <Route element={<ProtectedRoute />} >

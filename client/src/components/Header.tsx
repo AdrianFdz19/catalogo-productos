@@ -17,7 +17,7 @@ export default function Header() {
 
   return (
     <header className="w-full bg-white shadow-sm border-b border-gray-100 sticky top-0 z-20">
-      <div className="max-w-6xl mx-auto flex items-center justify-between px-5 py-3">
+      <div className="max-w-6xl mx-auto flex items-center justify-between px-0 py-3">
         
         {/* Logo / Nombre */}
         <Link to="/" className="flex items-center gap-2">
@@ -41,6 +41,15 @@ export default function Header() {
               className="text-gray-700 hover:text-black transition-colors text-sm font-medium"
             >
               Panel Admin
+            </Link>
+          )}
+
+          {user?.role === 'user' && (
+            <Link
+              to="/favoritos"
+              className="text-gray-700 hover:text-black transition-colors text-sm font-medium"
+            >
+              Favoritos
             </Link>
           )}
 

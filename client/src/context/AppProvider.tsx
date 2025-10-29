@@ -65,6 +65,8 @@ export default function AppProvider({ children }: AppProviderProps) {
 
         const data = await res.json();
         if (data.success && data.user) {
+          console.log(data);
+          
           setUser(data.user);
         } else {
           console.log(data);

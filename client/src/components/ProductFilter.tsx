@@ -1,6 +1,13 @@
 import React from 'react';
 
-export default function ProductFilter({ categories, selectedCategory, setSelectedCategory }) {
+type ProductsFilterProps = {
+  categories: string[];
+  selectedCategory: string;
+  setSelectedCategory: (value: string) => void;
+};
+
+
+export default function ProductFilter({ categories, selectedCategory, setSelectedCategory }: ProductsFilterProps) {
   return (
     <div className="flex gap-3 flex-wrap justify-center mb-6">
       <button

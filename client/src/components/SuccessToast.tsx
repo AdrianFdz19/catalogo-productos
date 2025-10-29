@@ -4,9 +4,10 @@ import { CheckCircle } from 'lucide-react';
 interface SuccessToastProps {
   message: string;
   onClose: () => void;
+  bgColor?: string;
 }
 
-const SuccessToast: React.FC<SuccessToastProps> = ({ message, onClose }) => {
+const SuccessToast: React.FC<SuccessToastProps> = ({ message, onClose, bgColor }) => {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
@@ -24,7 +25,9 @@ const SuccessToast: React.FC<SuccessToastProps> = ({ message, onClose }) => {
         show ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}
     >
-      <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+      <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
+        style={{ backgroundColor: bgColor || '#22c55e' }}
+      >
         <CheckCircle size={20} className="text-white" />
         <span className="text-sm font-medium">{message}</span>
       </div>

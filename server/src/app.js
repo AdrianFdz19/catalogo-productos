@@ -5,6 +5,8 @@ import { pool } from './config/databaseConfig.js';
 import products from './routes/products.routes.js';
 import uploadRoute from './routes/upload.routes.js';
 import auth from './routes/auth.routes.js';
+import { handleError } from './middlewares/error.middleware.js';
+import adminProducts from './routes/admin/products.routes.js';
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/products', products);
 app.use('/api', uploadRoute);
 app.use('/auth', auth);
+// admin routes
+app.use('/admin/products', adminProducts);
 
 app.get('/', (req, res) => res.send('Server is online'));
 
@@ -43,5 +47,7 @@ app.get('/database/info', async (req, res) => {
         console.error(err);
     }
 });
+
+app.use(handleError);
 
 export default app;

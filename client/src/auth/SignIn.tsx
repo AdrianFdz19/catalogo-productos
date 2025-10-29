@@ -9,7 +9,7 @@ interface SignInForm {
 
 const SignIn: React.FC = () => {
   const location = useLocation();
-  const from = location.state?.from || '/admin/products';
+  const from = location.state?.from || '/';
   const { apiUrl, setUser } = useAppContext();
   const [formData, setFormData] = useState<SignInForm>({
     usernameOrEmail: '',

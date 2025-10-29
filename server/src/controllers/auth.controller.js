@@ -2,10 +2,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/databaseConfig.js';
 import { env } from '../config/config.js';
+import { createUser, findUser, findUserByUsernameOrEmail, findUserByUsernameOrEmailSignIn } from '../models/auth.model.js';
 
 const JWT_EXPIRES_IN = '1d';
 
-export const getAuthUser = async (req, res) => {
+export const getAuthUser = async (req, res, next) => {
   try {
     // Intentar obtener token desde cookie o header
     const token = req.cookies?.token;
@@ -16,14 +17,12 @@ export const getAuthUser = async (req, res) => {
 
     // Verificar token
     const decoded = jwt.verify(token, 'secretkey');
+    
 
     // Buscar usuario en DB
-    const result = await pool.query(
-      'SELECT id, username, email, role, created_at FROM users WHERE id=$1',
-      [decoded.id]
-    );
-
-    const user = result.rows[0];
+  
+    const user = await findUser(decoded);
+    
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -34,71 +33,56 @@ export const getAuthUser = async (req, res) => {
       user,
     });
   } catch (err) {
-    console.error(err);
-    res.status(401).json({ message: 'Token inválido o expirado' });
+    next(err);
   }
 };
 
 // =======================================
 // Registro de usuario (SignUp)
 // =======================================
-export const signUp = async (req, res) => {
+export const signUp = async (req, res, next) => {
   const { username, email, full_name, password } = req.body;
 
   try {
-    // Verificar si ya existe el usuario o email
-    const existing = await pool.query(
-      'SELECT id FROM users WHERE username=$1 OR email=$2',
-      [username, email]
-    );
-    if (existing.rows.length > 0) {
+    // 1. Verificar si usuario o email ya existen
+    const existingUser = await findUserByUsernameOrEmail(username, email);
+    if (existingUser) {
       return res.status(400).json({ message: 'Usuario o correo ya existe' });
     }
 
-    // Hashear la contraseña
+    // 2. Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insertar en la DB
-    const result = await pool.query(
-      `INSERT INTO users (username, email, full_name, hashed_password) 
-       VALUES ($1, $2, $3, $4) RETURNING id, username, email, full_name, role, created_at`,
-      [username, email, full_name, hashedPassword]
-    );
+    // 3. Crear usuario
+    const newUser = await createUser(username, email, full_name, hashedPassword);
 
-    const userResult = result.rows[0];
-    const user = { id: userResult.id, username: userResult.username, email: userResult.email, role: userResult.role }
+    // 4. Crear token
+    const tokenPayload = { id: newUser.id, username: newUser.username, email: newUser.email, role: newUser.role };
+    const token = jwt.sign(tokenPayload, 'secretkey', { expiresIn: JWT_EXPIRES_IN });
 
-    // Crear la token de sesion
-    const token = jwt.sign(user, 'secretkey', { expiresIn: JWT_EXPIRES_IN });
-
-    // Enviar el token en una cookie httpOnly
+    // 5. Enviar token en cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: env.nodeEnv === 'production', // solo HTTPS en producción
-      sameSite: 'lax', // importante para proteger CSRF
-      maxAge: 3600 * 1000, // 1 hora
+      secure: env.nodeEnv === 'production',
+      sameSite: 'lax',
+      maxAge: 3600 * 1000,
     });
 
-    res.status(201).json({ message: 'Usuario creado', user });
+    res.status(201).json({ message: 'Usuario creado', user: tokenPayload });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error al registrar usuario' });
+    next(err);
   }
 };
 
 // =======================================
 // Inicio de sesión (SignIn)
 // =======================================
-export const signIn = async (req, res) => {
+export const signIn = async (req, res, next) => {
   const { usernameOrEmail, password } = req.body;
 
   try {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE username=$1 OR email=$2',
-      [usernameOrEmail, usernameOrEmail]
-    );
+    const user = await findUserByUsernameOrEmailSignIn(usernameOrEmail);
 
-    const user = result.rows[0];
     if (!user) {
       return res.status(400).json({ message: 'Usuario no encontrado' });
     }
@@ -114,32 +98,29 @@ export const signIn = async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    res
-      .cookie('token', token, {
-        httpOnly: true,
-        secure: env.nodeEnv === 'production',
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000,
-      })
-      .json({
-        message: 'Inicio de sesión exitoso',
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-        },
-      });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: env.nodeEnv === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
+    }).json({
+      message: 'Inicio de sesión exitoso',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error al iniciar sesión' });
+    next(err);
   }
 };
 
 // =======================================
 // Cerrar sesión
 // =======================================
-export const signOut = (req, res) => {
+export const signOut = (req, res, next) => {
   console.log('el usuario desea desloguearse');
   
   res.clearCookie('token', {
