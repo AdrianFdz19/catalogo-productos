@@ -71,6 +71,9 @@ const SignUp: React.FC = () => {
                     confirmPassword: '',
                 });
 
+                // Eliminamos la guest id de la session storage si es que existe.
+                sessionStorage.removeItem('guest-id');
+
                 setTimeout(() => {
                     navigate(`/`, { replace: true });
                 }, 2500);

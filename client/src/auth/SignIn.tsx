@@ -51,6 +51,9 @@ const SignIn: React.FC = () => {
       setSuccess(true);
       setFormData({ usernameOrEmail: '', password: '' });
 
+      // Eliminamos la guest id de la session storage si es que existe.
+      sessionStorage.removeItem('guest-id');
+
       // Redirigir al dashboard o home
       setTimeout(() => navigate(from, { replace: true }), 1500);
 

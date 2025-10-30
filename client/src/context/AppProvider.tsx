@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 // 1. Define la interfaz de tu contexto
 interface User {
   id: number,
   username: string,
-  email: string,
+  email?: string,
   role: string
 }
 
@@ -53,29 +54,31 @@ export default function AppProvider({ children }: AppProviderProps) {
     }
   };
 
-  // Autenticar al usuario en cada recarga
   // Verificación de usuario al cargar app
   useEffect(() => {
     const verifyAuth = async () => {
       try {
         const res = await fetch(`${apiUrl}/auth/verify`, {
           method: 'GET',
-          credentials: 'include', // importante para enviar la cookie
+          credentials: 'include',
         });
 
         const data = await res.json();
+
         if (data.success && data.user) {
-          console.log(data);
-          
           setUser(data.user);
         } else {
-          console.log(data);
-          setUser(null);
+          // crear guest si no hay token válido
+          const resGuest = await fetch(`${apiUrl}/auth/guest`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          const guestData = await resGuest.json();
+          setUser(guestData.user);
         }
       } catch (err) {
         console.error('Auth verification failed:', err);
         setUser(null);
-        setAuthLoading(false);
       } finally {
         setAuthLoading(false);
       }
@@ -83,6 +86,7 @@ export default function AppProvider({ children }: AppProviderProps) {
 
     verifyAuth();
   }, []);
+
 
   return (
     <AppContext.Provider value={{ user, setUser, apiUrl, setAuthLoading, isAuthLoading, handleLogout }}>

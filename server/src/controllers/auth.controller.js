@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../config/databaseConfig.js';
 import { env } from '../config/config.js';
 import { createUser, findUser, findUserByUsernameOrEmail, findUserByUsernameOrEmailSignIn } from '../models/auth.model.js';
+import { v4 as uuidv4 } from "uuid";
 
 const JWT_EXPIRES_IN = '1d';
 
@@ -129,4 +130,45 @@ export const signOut = (req, res, next) => {
     sameSite: 'lax',
   });
   res.json({ success: true });
+};
+
+
+// Crear cuenta para invitado
+export const createGuest = async (req, res) => {
+  try {
+    
+    const guestId = uuidv4();
+
+    // Guarda opcionalmente el guest en base de datos
+    const queryUser = await pool.query(
+      "INSERT INTO users (username, role, guest_id, email, hashed_password) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [`guest_${guestId.slice(0, 6)}`, "guest", guestId, `guest_${guestId.slice(0, 6)}@mail.com`, guestId]
+    );
+
+    const guestData = queryUser.rows[0];
+
+    const guestInfo = { id: guestData.id, username: guestData.username, role: "guest", email: guestData.email };
+
+    const token = jwt.sign(
+      guestInfo,
+      'secretkey',
+      { expiresIn: "7d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: env.nodeEnv === "production",
+      sameSite: "lax",
+    });
+
+    res.json({
+      success: true,
+      token,
+      message: 'Guest created',
+      user: guestInfo,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Error creando invitado" });
+  }
 };

@@ -14,12 +14,12 @@ const Products: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    // Espera a que user esté cargado
+
     if (!user || !user.id || !user.role) return;
 
     const fetchProducts = async () => {
       const path = user.role === 'admin' ? 'admin/products' : 'products/featured';
-	  
+
       setLoading(true);
       setErrorMsg(null);
 
@@ -39,7 +39,7 @@ const Products: React.FC = () => {
         if (!Array.isArray(result)) {
           throw new Error('Formato de respuesta inesperado');
         }
-		console.log(result);
+        console.log(result);
         setProducts(result);
       } catch (err: any) {
         console.error('Error cargando productos:', err);
@@ -109,7 +109,7 @@ const Products: React.FC = () => {
                   key={product.id}
                   product={product}
                   apiUrl={apiUrl}
-				  userRole={user?.role}
+                  userRole={user?.role}
                 />
               ))
             ) : (
