@@ -50,7 +50,7 @@ const AddProduct: React.FC = () => {
 
 			if (formData.imageUrls.length > 0) {
 				uploadedUrls = await Promise.all(
-					formData.imageUrls.map(async (file: File) => {
+					formData.imageUrls.map(async (file: (File)) => {
 						return await uploadImage(file, apiUrl);
 					})
 				);
@@ -269,7 +269,11 @@ const AddProduct: React.FC = () => {
 								{formData.imageUrls.length > 0 ? (
 									<>
 										<img
-											src={URL.createObjectURL(formData.imageUrls[currentImageIndex])}
+											src={
+												formData.imageUrls[currentImageIndex] instanceof File
+													? URL.createObjectURL(formData.imageUrls[currentImageIndex])
+													: formData.imageUrls[currentImageIndex] // si es string, usar directamente
+											}
 											alt={formData.name || 'Vista previa'}
 											className="w-full h-full object-cover transition-all"
 										/>

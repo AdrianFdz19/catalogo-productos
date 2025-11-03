@@ -5,7 +5,7 @@ export const getAllProducts = async (req, res, next) => {
   try {
     const { id: userId, role } = req.user;
     console.log(`${role}`);
-    
+
     const products = await findAllProducts(userId, role);
     res.json(products);
   } catch (err) {
@@ -114,34 +114,79 @@ export const getProductById = async (req, res, next) => {
 
 export const addProduct = async (req, res, next) => {
 
-    try {
-        const {
-            name,
-            description,
-            price,
-            category,
-            stock,
-            featured,
-            imageUrls, // array de strings ya subidas a Cloudinary
-        } = req.body;
+  try {
+    const {
+      name,
+      description,
+      price,
+      category,
+      stock,
+      featured,
+      imageUrls, // array de strings ya subidas a Cloudinary
+    } = req.body;
 
-        if (!name || !description || !price || !category || !stock || !imageUrls?.length) {
-            return res.status(400).json({ message: 'Faltan campos obligatorios o imágenes.' });
-        }
-
-        const productId = await createProduct({
-            name,
-            description,
-            price,
-            category,
-            stock,
-            featured,
-            imageUrls,
-        });
-
-        res.status(201).json({ message: 'Producto creado con éxito', productId });
-    } catch (err) {
-        console.error('Error al crear producto:', err);
-        next(err);
+    if (!name || !description || !price || !category || !stock || !imageUrls?.length) {
+      return res.status(400).json({ message: 'Faltan campos obligatorios o imágenes.' });
     }
+
+    const productId = await createProduct({
+      name,
+      description,
+      price,
+      category,
+      stock,
+      featured,
+      imageUrls,
+    });
+
+    res.status(201).json({ message: 'Producto creado con éxito', productId });
+  } catch (err) {
+    console.error('Error al crear producto:', err);
+    next(err);
+  }
+};
+
+// Editar un producto
+export const editProduct = async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    const { role } = req.user;
+    if (role !== 'admin') return res.status(403).json({ message: 'No tienes permisos de administrador' });
+
+    const { id } = req.params;
+    const { name, description, price, category, stock, featured, imageUrls } = req.body;
+
+    if (!name || !description || price == null || !category || stock == null || !imageUrls?.length) {
+      return res.status(400).json({ message: 'Faltan campos obligatorios o imágenes.' });
+    }
+
+    await client.query('BEGIN');
+
+    await client.query(
+      `UPDATE products
+       SET name=$1, description=$2, price=$3, category=$4, stock=$5, featured=$6
+       WHERE id=$7`,
+      [name, description, price, category, stock, featured, id]
+    );
+
+    await client.query('DELETE FROM media_urls WHERE product_id = $1', [id]);
+
+    const insertPromises = imageUrls.map(img =>
+      client.query(
+        'INSERT INTO media_urls (product_id, url, media_type) VALUES($1, $2, $3)',
+        [id, img, typeof img === 'string' ? 'image' : 'file']
+      )
+    );
+    await Promise.all(insertPromises);
+
+    await client.query('COMMIT');
+
+    res.status(200).json({ message: 'Producto actualizado con éxito', id });
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    next(err);
+  } finally {
+    client.release();
+  }
 };

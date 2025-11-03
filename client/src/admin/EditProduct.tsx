@@ -5,13 +5,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppProvider';
 import { uploadImage } from '../utils/uploadImage';
 import SuccessToast from '../components/SuccessToast';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const AddProduct: React.FC = () => {
     const { product_id } = useParams();
     const { apiUrl } = useAppContext();
+    const navigate = useNavigate();
     const [showToast, setShowToast] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [initialImages, setInitialImages] = useState<string[]>([]);
     const nameInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState<ProductForm>({
         id: 'preview', // id temporal
@@ -35,6 +37,7 @@ const AddProduct: React.FC = () => {
                 if (response.ok) {
                     const data = await response.json();
                     console.log(data);
+                    setInitialImages(data.images);
                     setFormData({
                         id: data.id,
                         name: data.name,
@@ -85,12 +88,8 @@ const AddProduct: React.FC = () => {
 
             uploadedUrls = await Promise.all(
                 formData.imageUrls.map(async (img) => {
-                    if (typeof img === 'string') {
-                        return img; // ya está subida a Cloudinary
-                    } else {
-                        // es File, se sube
-                        return await uploadImage(img, apiUrl);
-                    }
+                    if (typeof img === 'string') return img;
+                    return await uploadImage(img, apiUrl);
                 })
             );
 
@@ -102,30 +101,37 @@ const AddProduct: React.FC = () => {
                 imageUrls: uploadedUrls,
             };
 
-            const response = await fetch(`${apiUrl}/products`, {
-                method: 'POST',
+            const response = await fetch(`${apiUrl}/products/${formData.id}`, {
+                method: 'PUT', // PUT para reemplazar, PATCH para actualizar parcialmente
                 credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(productToSend),
             });
 
-            const data = await response.json();
-            console.log('🎉 Producto guardado:', data);
-            setShowToast(true);
-            setFormData({
-                id: 'preview',
-                name: '',
-                description: '',
-                price: 0,
-                category: '',
-                stock: 0,
-                imageUrls: [],
-                featured: false,
-                tags: [],
-            });
-            nameInputRef.current?.focus();
+            if (response.ok) {
+                const data = await response.json();
+                console.log('🎉 Producto actualizado:', data);
+                setShowToast(true);
+                setFormData({
+                    id: 'preview',
+                    name: '',
+                    description: '',
+                    price: 0,
+                    category: '',
+                    stock: 0,
+                    imageUrls: [],
+                    featured: false,
+                    tags: [],
+                });
+                nameInputRef.current?.focus();
+                setShowToast(true);
+                setTimeout(() => {
+                    navigate('/admin/products'); // usando useNavigate de react-router-dom
+                }, 1000);
+            } else {
+                const data = await response.json();
+                console.error('Client error: ', data);
+            }
 
         } catch (err) {
             console.error('❌ Error subiendo imágenes:', err);
@@ -229,6 +235,7 @@ const AddProduct: React.FC = () => {
                                     imageUrls: imgs,
                                 }))
                             }
+                            initialImages={initialImages}
                         />
 
                         <div className="flex items-center gap-2">

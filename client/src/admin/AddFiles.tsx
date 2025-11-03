@@ -1,13 +1,22 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 
 interface AddFilesProps {
-  onImagesChange: (files: File[]) => void;
+  onImagesChange: (files: (File | string)[]) => void;
+  initialImages?: string[];
 }
 
-const AddFiles: React.FC<AddFilesProps> = ({ onImagesChange }) => {
+const AddFiles: React.FC<AddFilesProps> = ({ onImagesChange, initialImages = [] }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<(File | string)[]>([]);
+
+  // 🔹 Cargar imágenes iniciales (por ejemplo al editar un producto)
+  useEffect(() => {
+    if (initialImages.length > 0) {
+      setImages(initialImages);
+      onImagesChange(initialImages);
+    }
+  }, [initialImages]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -46,41 +55,45 @@ const AddFiles: React.FC<AddFilesProps> = ({ onImagesChange }) => {
 
       {images.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-          {images.map((file, index) => (
-            <div
-              key={index}
-              className="relative w-full aspect-square rounded-md overflow-hidden shadow-sm group"
-              draggable
-              onDragStart={(e) => e.dataTransfer.setData('index', index.toString())}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                const fromIndex = Number(e.dataTransfer.getData('index'));
-                const toIndex = index;
-                if (fromIndex === toIndex) return;
+          {images.map((item, index) => {
+            const isFile = item instanceof File;
+            const src = isFile ? URL.createObjectURL(item) : item; // ← si es string, se usa directamente
+            return (
+              <div
+                key={index}
+                className="relative w-full aspect-square rounded-md overflow-hidden shadow-sm group"
+                draggable
+                onDragStart={(e) => e.dataTransfer.setData('index', index.toString())}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  const fromIndex = Number(e.dataTransfer.getData('index'));
+                  const toIndex = index;
+                  if (fromIndex === toIndex) return;
 
-                const updated = [...images];
-                const moved = updated.splice(fromIndex, 1)[0];
-                updated.splice(toIndex, 0, moved);
+                  const updated = [...images];
+                  const moved = updated.splice(fromIndex, 1)[0];
+                  updated.splice(toIndex, 0, moved);
 
-                setImages(updated);
-                onImagesChange(updated);
-              }}
-            >
-              <img
-                src={URL.createObjectURL(file)}
-                alt={`preview-${index}`}
-                className="w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => removeImage(index)}
-                className="absolute top-1 right-1 bg-white text-gray-800 rounded-full p-1 shadow group-hover:opacity-100 opacity-0 transition"
-                title="Eliminar imagen"
+                  setImages(updated);
+                  onImagesChange(updated);
+                }}
               >
-                <X size={16} />
-              </button>
-            </div>
-          ))}
+                <img
+                  src={src}
+                  alt={`preview-${index}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-1 right-1 bg-white text-gray-800 rounded-full p-1 shadow group-hover:opacity-100 opacity-0 transition"
+                  title="Eliminar imagen"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
