@@ -10,6 +10,7 @@ import SignIn from './auth/SignIn'
 import ProtectedRoute from './admin/ProtectedRoute'
 import LayoutWithHeader from './layouts/LayoutWithHeader'
 import Favorites from './pages/Favorites'
+import Tokens from './admin/Tokens'
 
 function App() {
 
@@ -28,8 +29,9 @@ function App() {
         <Route element={<ProtectedRoute />} >
           <Route element={<LayoutWithHeader />} >
             <Route path='/admin/products/add' element={<AddProduct />} ></Route>
-            <Route path='/admin/products/edit' element={<EditProduct />} ></Route>
+            <Route path='/admin/products/edit/:product_id' element={<EditProduct />} ></Route>
             <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/admin/tokens" element={<Tokens />} />
           </Route>
         </Route>
 

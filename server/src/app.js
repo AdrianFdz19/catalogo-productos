@@ -6,9 +6,11 @@ import products from './routes/products.routes.js';
 import uploadRoute from './routes/upload.routes.js';
 import auth from './routes/auth.routes.js';
 import { handleError } from './middlewares/error.middleware.js';
-import adminProducts from './routes/admin/products.routes.js';
+import adminTokens from './routes/admin/tokens.routes.js';
+import { env } from './config/config.js';
 
 const app = express();
+console.log(typeof env.secret);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -17,12 +19,11 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.urlencoded({ extended: true }));
-
+ 
 app.use('/products', products);
 app.use('/api', uploadRoute);
 app.use('/auth', auth);
-// admin routes
-app.use('/admin/products', adminProducts);
+app.use('/admin/tokens', adminTokens);
 
 app.get('/', (req, res) => res.send('Server is online'));
 

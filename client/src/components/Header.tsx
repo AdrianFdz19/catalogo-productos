@@ -36,12 +36,20 @@ export default function Header() {
           </Link>
 
           {user?.role === 'admin' && (
+            <>
             <Link
               to="/admin/products"
               className="text-gray-700 hover:text-black transition-colors text-sm font-medium"
             >
               Panel Admin
             </Link>
+            <Link
+              to="/admin/tokens"
+              className="text-gray-700 hover:text-black transition-colors text-sm font-medium"
+            >
+              Tokens
+            </Link>
+            </>
           )}
 
           {user?.role === 'user' && (

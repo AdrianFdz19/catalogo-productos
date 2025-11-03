@@ -17,7 +17,7 @@ export const getAuthUser = async (req, res, next) => {
     }
 
     // Verificar token
-    const decoded = jwt.verify(token, 'secretkey');
+    const decoded = jwt.verify(token, env.secret);
     
 
     // Buscar usuario en DB
@@ -59,7 +59,7 @@ export const signUp = async (req, res, next) => {
 
     // 4. Crear token
     const tokenPayload = { id: newUser.id, username: newUser.username, email: newUser.email, role: newUser.role };
-    const token = jwt.sign(tokenPayload, 'secretkey', { expiresIn: JWT_EXPIRES_IN });
+    const token = jwt.sign(tokenPayload, env.secret, { expiresIn: JWT_EXPIRES_IN });
 
     // 5. Enviar token en cookie
     res.cookie('token', token, {
@@ -95,7 +95,7 @@ export const signIn = async (req, res, next) => {
 
     const token = jwt.sign(
       { id: user.id, username: user.username, role: user.role },
-      'secretkey',
+      env.secret,
       { expiresIn: JWT_EXPIRES_IN }
     );
 
@@ -151,7 +151,7 @@ export const createGuest = async (req, res) => {
 
     const token = jwt.sign(
       guestInfo,
-      'secretkey',
+      env.secret,
       { expiresIn: "7d" }
     );
 

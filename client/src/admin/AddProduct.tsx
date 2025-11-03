@@ -64,7 +64,7 @@ const AddProduct: React.FC = () => {
 				imageUrls: uploadedUrls,
 			};
 
-			const response = await fetch(`${apiUrl}/admin/products`, {
+			const response = await fetch(`${apiUrl}/products`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: {

@@ -18,13 +18,12 @@ const Products: React.FC = () => {
     if (!user || !user.id || !user.role) return;
 
     const fetchProducts = async () => {
-      const path = user.role === 'admin' ? 'admin/products' : 'products/featured';
 
       setLoading(true);
       setErrorMsg(null);
 
       try {
-        const response = await fetch(`${apiUrl}/${path}`, {
+        const response = await fetch(`${apiUrl}/products`, {
           method: 'GET',
           credentials: 'include',
         });

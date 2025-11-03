@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ProductForm } from '../types/products';
 import AddFiles from './AddFiles';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAppContext } from '../context/AppProvider';
+import { uploadImage } from '../utils/uploadImage';
+import SuccessToast from '../components/SuccessToast';
+import { useParams } from 'react-router-dom';
 
-const EditProduct: React.FC = () => {
+const AddProduct: React.FC = () => {
+    const { product_id } = useParams();
+    const { apiUrl } = useAppContext();
+    const [showToast, setShowToast] = useState(false);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const nameInputRef = useRef<HTMLInputElement>(null);
     const [formData, setFormData] = useState<ProductForm>({
         id: 'preview', // id temporal
         name: '',
@@ -16,6 +24,39 @@ const EditProduct: React.FC = () => {
         featured: false,
         tags: []
     });
+
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const response = await fetch(`${apiUrl}/products/${product_id}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data);
+                    setFormData({
+                        id: data.id,
+                        name: data.name,
+                        description: data.description,
+                        price: Number(data.price),
+                        category: data.category,
+                        stock: Number(data.stock),
+                        imageUrls: data.images,
+                        featured: data.featured,
+                        tags: []
+                    });
+                } else {
+                    console.error('Client error.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchProduct();
+    }, []);
+
+    const currentImage = formData.imageUrls[currentImageIndex];
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -31,14 +72,64 @@ const EditProduct: React.FC = () => {
 
         setFormData((prev) => ({
             ...prev,
-            [name]: inputValue,
+            [name as keyof ProductForm]: inputValue,
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Producto a guardar:', formData);
-        // Aquí iría la llamada real al backend
+
+        try {
+            /* Subir primero las imagenes a cloudinary-multer */
+            let uploadedUrls: string[] = [];
+
+            uploadedUrls = await Promise.all(
+                formData.imageUrls.map(async (img) => {
+                    if (typeof img === 'string') {
+                        return img; // ya está subida a Cloudinary
+                    } else {
+                        // es File, se sube
+                        return await uploadImage(img, apiUrl);
+                    }
+                })
+            );
+
+            console.log('✅ URLs subidas:', uploadedUrls);
+
+            /* Subir el articulo completo con la URL de las imagenes */
+            const productToSend = {
+                ...formData,
+                imageUrls: uploadedUrls,
+            };
+
+            const response = await fetch(`${apiUrl}/products`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(productToSend),
+            });
+
+            const data = await response.json();
+            console.log('🎉 Producto guardado:', data);
+            setShowToast(true);
+            setFormData({
+                id: 'preview',
+                name: '',
+                description: '',
+                price: 0,
+                category: '',
+                stock: 0,
+                imageUrls: [],
+                featured: false,
+                tags: [],
+            });
+            nameInputRef.current?.focus();
+
+        } catch (err) {
+            console.error('❌ Error subiendo imágenes:', err);
+        }
     };
 
     const nextImage = () => {
@@ -58,7 +149,7 @@ const EditProduct: React.FC = () => {
     return (
         <section className="w-full px-4 py-10 bg-white">
             <div className="max-w-4xl mx-auto">
-                <h2 className="text-3xl font-bold mb-8 text-gray-900">Agregar nuevo producto</h2>
+                <h2 className="text-3xl font-bold mb-8 text-gray-900">Editar producto</h2>
 
                 <div className="flex flex-col md:flex-row gap-8">
                     {/* Columna izquierda: formulario */}
@@ -67,6 +158,7 @@ const EditProduct: React.FC = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del producto</label>
                             <input
                                 type="text"
+                                ref={nameInputRef}
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
@@ -134,7 +226,7 @@ const EditProduct: React.FC = () => {
                             onImagesChange={(imgs) =>
                                 setFormData((prev) => ({
                                     ...prev,
-                                    imageUrl: imgs,
+                                    imageUrls: imgs,
                                 }))
                             }
                         />
@@ -211,52 +303,60 @@ const EditProduct: React.FC = () => {
                     <div className="flex-1">
                         <p className="text-sm text-gray-600 mb-2">Vista previa</p>
                         <div className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition flex flex-col">
-                            <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden">
-                                <img
-                                    src={formData.imageUrls[currentImageIndex] ? URL.createObjectURL(formData.imageUrls[currentImageIndex]) : ''}
-                                    alt={formData.name}
-                                    className="w-full h-full object-cover transition-all"
-                                />
-
-                                {formData.imageUrls.length > 1 && (
+                            <div className="relative w-full aspect-square mb-4 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                {formData.imageUrls.length > 0 ? (
                                     <>
-                                        <button
-                                            onClick={prevImage}
-                                            className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition 
-                                            cursor-pointer"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
+                                        <img
+                                            src={
+                                                typeof currentImage === 'string'
+                                                    ? currentImage // ya es URL de Cloudinary
+                                                    : URL.createObjectURL(currentImage) // es File
+                                            }
+                                            alt={formData.name || 'Vista previa'}
+                                            className="w-full h-full object-cover transition-all"
+                                        />
 
-                                        <button
-                                            onClick={nextImage}
-                                            className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition
-                                            cursor-pointer"
-                                        >
-                                            <ChevronRight size={20} />
-                                        </button>
+                                        {formData.imageUrls.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={prevImage}
+                                                    className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition cursor-pointer"
+                                                >
+                                                    <ChevronLeft size={20} />
+                                                </button>
+
+                                                <button
+                                                    onClick={nextImage}
+                                                    className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow hover:bg-white transition cursor-pointer"
+                                                >
+                                                    <ChevronRight size={20} />
+                                                </button>
+                                            </>
+                                        )}
                                     </>
+                                ) : (
+                                    <span className="text-gray-400 text-sm">No hay imagen</span>
                                 )}
                             </div>
 
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                {formData.name}
-                            </h3>
-                            <p
-                                className="text-gray-600 text-sm break-words whitespace-pre-wrap"
-                            >
+                            <h3 className="text-lg font-semibold text-gray-900">{formData.name || 'Nombre del producto'}</h3>
+                            <p className="text-gray-600 text-sm break-words whitespace-pre-wrap">
                                 {formData.description.length > 200
                                     ? formData.description.slice(0, 200) + '...'
-                                    : formData.description}
+                                    : formData.description || 'Descripción del producto'}
                             </p>
                             <p className="text-blue-600 font-bold mt-2">${formData.price}</p>
                             <p className="text-xs text-gray-400 mt-auto">Stock: {formData.stock}</p>
                         </div>
+
                     </div>
                 </div>
             </div>
+            {showToast && (
+                <SuccessToast message="Producto agregado exitosamente" onClose={() => setShowToast(false)} />
+            )}
         </section>
     );
 };
 
-export default EditProduct;
+export default AddProduct;

@@ -35,8 +35,10 @@ const AdminProducts: React.FC = () => {
 
 	useEffect(() => {
 		const fetchPaginatedProducts = async () => {
+			console.log(`Se buscara productos de la categoria: ${selectedCategory}. pagina ${page}, limite de ${limit}`);
+			
 			try {
-				const res = await fetch(`${apiUrl}/admin/products/paginated?page=${page}&limit=${limit}&category=${selectedCategory}`, {
+				const res = await fetch(`${apiUrl}/products/paginated?page=${page}&limit=${limit}&category=${selectedCategory}`, {
 					method: 'GET',
 					credentials: 'include'
 				});

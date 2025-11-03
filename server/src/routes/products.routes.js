@@ -1,21 +1,21 @@
 import express from 'express'
-import { getAllProducts, getFeaturedProducts, getUserFavorites, getPaginatedProducts, getProductById, addToFavorites, removeFromFavorites, getFeaturedProductsServer } from '../controllers/products.controller.js';
-import { verifyToken } from '../middlewares/authMiddleware.js';
+import { getAllProducts, getFeaturedProducts, getUserFavorites, getPaginatedProducts, getProductById, addToFavorites, removeFromFavorites, addProduct } from '../controllers/products.controller.js';
+import { authToken } from '../middlewares/auth.middleware.js';
 const products = express.Router();
 
-products.get('/', verifyToken, getAllProducts);
+products.post('/', authToken, addProduct);
 
-products.get('/featured', verifyToken, getFeaturedProducts);
+products.get('/', authToken, getAllProducts);
 
-products.get('/featured-server' , getFeaturedProductsServer);
+products.get('/featured', authToken, getFeaturedProducts);
 
-products.get('/paginated', verifyToken, getPaginatedProducts);
+products.get('/paginated', authToken, getPaginatedProducts);
 
-products.get('/favorites', verifyToken , getUserFavorites);
+products.get('/favorites', authToken, getUserFavorites);
 
-products.post('/add-favorites', verifyToken , addToFavorites);
+products.post('/add-favorites', authToken, addToFavorites);
 
-products.post('/remove-favorites', verifyToken , removeFromFavorites);
+products.post('/remove-favorites', authToken, removeFromFavorites);
 
 products.get('/:id', getProductById);
 
