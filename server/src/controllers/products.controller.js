@@ -100,7 +100,10 @@ export const removeFromFavorites = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const product = await findProductById(id);
+    const userId = req.user?.id || null;
+    const role = req.user?.role || 'user';
+
+    const product = await findProductById(id, userId, role);
 
     if (!product) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -188,5 +191,57 @@ export const editProduct = async (req, res, next) => {
     next(err);
   } finally {
     client.release();
+  }
+};
+
+// Eliminar un producto
+export const deleteProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.user;
+    console.log(id);
+
+    // 1️⃣ Validar parámetros
+    if (!id) {
+      return res.status(400).json({ message: 'Falta el ID del producto.' });
+    }
+
+    // 2️⃣ Verificar rol del usuario
+    if (role !== 'admin') {
+      return res.status(403).json({ message: 'No tienes permisos de administrador.' });
+    }
+
+    // 3️⃣ Verificar que el producto exista antes de eliminar
+    const { rows } = await pool.query(
+      `SELECT id, name FROM products WHERE id = $1`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'El producto no existe.' });
+    }
+
+    // 4️⃣ Buscar y eliminar las imágenes asociadas si existen
+    const media = await pool.query(
+      `SELECT url FROM media_urls WHERE product_id = $1`,
+      [id]
+    );
+
+    if (media.rows.length > 0) {
+      // Eliminar los registros de media_urls
+      await pool.query(`DELETE FROM media_urls WHERE product_id = $1`, [id]);
+    }
+
+    // 5️⃣ Eliminar el producto
+    await pool.query(`DELETE FROM products WHERE id = $1`, [id]);
+
+    // 6️⃣ Confirmar eliminación
+    res.status(200).json({
+      success: true,
+      message: `Producto "${rows[0].name}" eliminado con éxito.`,
+    });
+  } catch (err) {
+    console.error('Error al eliminar producto:', err);
+    next(err);
   }
 };

@@ -3,9 +3,22 @@ import React, { useEffect, useState } from 'react';
 import { MappedProduct } from '../types/products';
 import { useAppContext } from '../context/AppProvider';
 import { useNavigate } from 'react-router-dom';
+import { MdDelete } from "react-icons/md";
+import { MdEdit } from "react-icons/md";
+import { MdOpenInNew } from "react-icons/md";
+import DeleteModal from './DeleteModal';
+import SuccessToast from '../components/SuccessToast';
+
 
 const AdminProducts: React.FC = () => {
 	const { apiUrl } = useAppContext();
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [deleteLoading, setDeleteLoading] = useState(false);
+	const [toast, setToast] = useState<{ message: string; visible: boolean }>({
+		message: '',
+		visible: false,
+	});
+	const [selectedProduct, setSelectedProduct] = useState(null);
 	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 	const [page, setPage] = useState(1);
 	const [total, setTotal] = useState(0);
@@ -36,7 +49,7 @@ const AdminProducts: React.FC = () => {
 	useEffect(() => {
 		const fetchPaginatedProducts = async () => {
 			console.log(`Se buscara productos de la categoria: ${selectedCategory}. pagina ${page}, limite de ${limit}`);
-			
+
 			try {
 				const res = await fetch(`${apiUrl}/products/paginated?page=${page}&limit=${limit}&category=${selectedCategory}`, {
 					method: 'GET',
@@ -67,6 +80,48 @@ const AdminProducts: React.FC = () => {
 
 		fetchPaginatedProducts();
 	}, [page, selectedCategory]);
+
+	// Eliminar un producto
+	const handleDelete = async (productId: number) => {
+		console.log('🗑️ Eliminando producto:', productId);
+
+		try {
+			setDeleteLoading(true);
+
+			const response = await fetch(`${apiUrl}/products/${productId}`, {
+				method: 'DELETE',
+				credentials: 'include',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				console.error('❌ Error al eliminar producto:', data);
+				/* toast.error(data.message || 'Error al eliminar el producto.'); */
+				return;
+			}
+
+			// ✅ Éxito
+			console.log('✅ Producto eliminado:', data);
+
+			// Opcional: recargar productos o eliminarlo del estado local
+			setProducts(prev => prev.filter(p => Number(p.id) !== Number(productId)));
+
+			setToast({ message: 'Producto eliminado correctamente.', visible: true });
+
+			// Cerrar modal y limpiar selección
+			setIsModalOpen(false);
+			setSelectedProduct(null);
+		} catch (err) {
+			console.error('⚠️ Error del servidor:', err);
+			/* toast.error('Hubo un problema con el servidor.'); */
+		} finally {
+			setDeleteLoading(false);
+		}
+	};
 
 	return (
 		<section className="w-full px-4 py-10">
@@ -169,8 +224,8 @@ const AdminProducts: React.FC = () => {
 								<div className="hidden sm:block">
 									<span
 										className={`px-2 py-[2px] rounded-full text-xs font-medium ${prod.featured
-												? 'bg-green-100 text-green-700'
-												: 'bg-gray-100 text-gray-500'
+											? 'bg-green-100 text-green-700'
+											: 'bg-gray-100 text-gray-500'
 											}`}
 									>
 										{prod.featured ? 'Destacado' : 'Normal'}
@@ -181,21 +236,27 @@ const AdminProducts: React.FC = () => {
 								<div className="flex justify-center gap-2 text-sm">
 									<button
 										onClick={() => navigate(`/product/${prod.id}`)}
-										className="text-gray-600 hover:text-blue-600"
+										className="p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
+										title="Ver producto"
 									>
-										👁
+										<MdOpenInNew className="text-lg" />
 									</button>
 									<button
 										onClick={() => navigate(`/admin/products/edit/${prod.id}`)}
-										className="text-gray-600 hover:text-yellow-600"
+										className="p-2 rounded-md text-gray-600 hover:text-yellow-600 hover:bg-yellow-50 transition-colors duration-200 cursor-pointer"
+										title="Editar producto"
 									>
-										✏️
+										<MdEdit className="text-lg" />
 									</button>
 									<button
-										onClick={() => alert(`Eliminar producto ${prod.name}`)}
-										className="text-gray-600 hover:text-red-600"
+										onClick={() => {
+											setSelectedProduct(prod);
+											setIsModalOpen(true);
+										}}
+										className="p-2 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200 cursor-pointer"
+										title="Eliminar producto"
 									>
-										🗑
+										<MdDelete className="text-lg" />
 									</button>
 								</div>
 							</div>
@@ -211,31 +272,34 @@ const AdminProducts: React.FC = () => {
 				{/* Context Menu */}
 				{contextMenu.visible && contextMenu.product && (
 					<ul
-						className="absolute z-50 bg-white border border-gray-200 rounded-md shadow-lg w-40 text-sm"
+						className="absolute z-50 w-48 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-fade-in"
 						style={{ top: contextMenu.y, left: contextMenu.x }}
 					>
 						<li
-							className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+							className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors duration-150"
 							onClick={() => navigate(`/product/${contextMenu.product?.id}`)}
 						>
-							👁 Ver
+							<MdOpenInNew className="text-lg text-blue-500" />
+							<span>Abrir en nueva pestaña</span>
 						</li>
+
 						<li
-							className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-							onClick={() =>
-								navigate(`/admin/products/edit/${contextMenu.product?.id}`)
-							}
+							className="flex items-center gap-2 px-4 py-2.5 text-gray-700 hover:bg-gray-100 cursor-pointer transition-colors duration-150"
+							onClick={() => navigate(`/admin/products/edit/${contextMenu.product?.id}`)}
 						>
-							✏️ Editar
+							<MdEdit className="text-lg text-amber-500" />
+							<span>Editar</span>
 						</li>
+
 						<li
-							className="px-4 py-2 text-red-600 hover:bg-red-50 cursor-pointer"
+							className="flex items-center gap-2 px-4 py-2.5 text-red-600 hover:bg-red-50 cursor-pointer transition-colors duration-150"
 							onClick={() => {
-								alert(`Eliminar producto ${contextMenu.product?.name}`);
-								setContextMenu({ ...contextMenu, visible: false });
+								setSelectedProduct(contextMenu.product);
+								setIsModalOpen(true);
 							}}
 						>
-							🗑 Eliminar
+							<MdDelete className="text-lg text-red-500" />
+							<span>Eliminar</span>
 						</li>
 					</ul>
 				)}
@@ -259,11 +323,20 @@ const AdminProducts: React.FC = () => {
 					</button>
 				</div>
 			</div>
+			<DeleteModal
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				onConfirm={handleDelete}
+				product={selectedProduct}
+				isLoading={deleteLoading}
+			/>
+			{toast.visible && (
+				<SuccessToast
+					message={toast.message}
+					onClose={() => setToast({ message: '', visible: false })}
+				/>
+			)}
 		</section>
-
-
-
-
 	);
 };
 

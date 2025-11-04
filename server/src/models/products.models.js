@@ -293,20 +293,47 @@ export const removeFavorite = async (userId, productId) => {
   return result.rows[0]; // devuelve el registro eliminado si existía
 };
 
-export const findProductById = async (productId) => {
-  const query = `
-    SELECT p.*,
-      COALESCE(
-        json_agg(mu) FILTER (WHERE mu.id IS NOT NULL),
-        '[]'
-      ) AS images
-    FROM products p
-    LEFT JOIN media_urls mu ON p.id = mu.product_id
-    WHERE p.id = $1
-    GROUP BY p.id
-  `;
+export const findProductById = async (productId, userId = null, role = 'user') => {
+  let query;
+  let params;
 
-  const result = await pool.query(query, [productId]);
+  if (role === 'admin') {
+    query = `
+      SELECT 
+        p.*,
+        COALESCE(
+          JSON_AGG(JSON_BUILD_OBJECT('url', m.url))
+          FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS images
+      FROM products p
+      LEFT JOIN media_urls m ON p.id = m.product_id
+      WHERE p.id = $1
+      GROUP BY p.id
+    `;
+    params = [productId];
+  } else {
+    query = `
+      SELECT 
+        p.*,
+        COALESCE(
+          JSON_AGG(JSON_BUILD_OBJECT('url', m.url))
+          FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS images,
+        CASE 
+          WHEN f.user_id IS NOT NULL THEN true
+          ELSE false
+        END AS "isFavorite"
+      FROM products p
+      LEFT JOIN media_urls m ON p.id = m.product_id
+      LEFT JOIN favorites f 
+        ON p.id = f.product_id AND f.user_id = $2
+      WHERE p.id = $1
+      GROUP BY p.id, f.user_id
+    `;
+    params = [productId, userId];
+  }
+
+  const result = await pool.query(query, params);
 
   if (result.rows.length === 0) {
     return null;
@@ -314,8 +341,17 @@ export const findProductById = async (productId) => {
 
   const product = result.rows[0];
 
-  // Transformar images: solo extraer el campo 'url'
+  // Normalizar la estructura de salida
   product.images = product.images.map(img => img.url);
+
+  // Convertir numéricos o campos útiles
+  /* product.price = Number(product.price); */
+
+  // Si no es usuario, simplemente no hay isFavorite
+  if (role === 'admin') {
+    delete product.isFavorite;
+  }
 
   return product;
 };
+

@@ -1,5 +1,5 @@
 import express from 'express'
-import { getAllProducts, getFeaturedProducts, getUserFavorites, getPaginatedProducts, getProductById, addToFavorites, removeFromFavorites, addProduct, editProduct } from '../controllers/products.controller.js';
+import { getAllProducts, getFeaturedProducts, getUserFavorites, getPaginatedProducts, getProductById, addToFavorites, removeFromFavorites, addProduct, editProduct, deleteProduct } from '../controllers/products.controller.js';
 import { authToken } from '../middlewares/auth.middleware.js';
 const products = express.Router();
 
@@ -17,8 +17,10 @@ products.post('/add-favorites', authToken, addToFavorites);
 
 products.post('/remove-favorites', authToken, removeFromFavorites);
 
-products.get('/:id', getProductById);
+products.get('/:id', authToken, getProductById);
 
 products.put('/:id', authToken, editProduct);
+
+products.delete('/:id', authToken, deleteProduct);
 
 export default products;
