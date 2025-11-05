@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppProvider';
 import ImageViewer from '../components/ImageViewer';
 import { FaHeart, FaWhatsapp } from 'react-icons/fa';
@@ -20,6 +20,7 @@ type Product = {
 const ProductDetail: React.FC = () => {
 	const { id } = useParams<{ id: string }>();
 	const { apiUrl, user } = useAppContext();
+	const navigate = useNavigate();
 	const [product, setProduct] = useState<Product | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -162,13 +163,27 @@ const ProductDetail: React.FC = () => {
 							{user?.role === 'user' &&
 								<>
 
-									<button
-										onClick={toggleFavorite}
-										className="flex items-center justify-center gap-2 border border-gray-300 text-gray-800 font-medium py-2 rounded-lg hover:bg-gray-100 transition"
-									>
-										<FaHeart className="text-gray-700" />
-										Agregar a favoritos
-									</button>
+									{isFavorite ? (
+										<>
+											<button
+												onClick={() => navigate('/favoritos')}
+												className="flex items-center justify-center gap-2 border border-gray-300 text-gray-800 font-medium py-2 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+											>
+												<FaHeart className="text-gray-700" />
+												Ver en favoritos
+											</button>
+										</>
+									) : (
+										<>
+											<button
+												onClick={toggleFavorite}
+												className="flex items-center justify-center gap-2 border border-gray-300 text-gray-800 font-medium py-2 rounded-lg hover:bg-gray-100 transition cursor-pointer"
+											>
+												<FaHeart className="text-gray-700" />
+												Agregar a favoritos
+											</button>
+										</>
+									)}
 
 									<a
 										href={`https://wa.me/5212280000000?text=Hola, me interesa el producto "${product.name}"`}
