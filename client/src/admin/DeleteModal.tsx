@@ -24,6 +24,7 @@ export default function DeleteModal({
     setInputValue(value);
     setIsMatch(value.trim() === product.name.trim());
   };
+  
 
   return (
     <AnimatePresence>
@@ -47,7 +48,7 @@ export default function DeleteModal({
 
             <div className="flex flex-col items-center gap-3 mb-4">
               <img
-                src={product.image || "/placeholder.png"}
+                src={product.image || product.images[0] || "/placeholder.png"}
                 alt={product.name}
                 className="w-24 h-24 object-cover rounded-md border"
               />

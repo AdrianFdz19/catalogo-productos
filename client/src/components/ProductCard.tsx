@@ -68,7 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, apiUrl, userRole }) 
       </div>
 
       <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
-      <p className="text-gray-600 text-sm">{product.description}</p>
+      {/* <p className="text-gray-600 text-sm">{product.description}</p> */}
       <p className="text-blue-600 font-bold mt-2">${product.price}</p>
       <p className="text-xs text-gray-400 mt-auto">Stock: {product.stock}</p>
       {showToast && (
