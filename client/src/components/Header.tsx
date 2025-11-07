@@ -13,6 +13,10 @@ export default function Header() {
     console.log(isMobileSize);
   }, [isMobileSize]);
 
+  useEffect(() => {
+    if (user?.id) console.log(user);
+  }, [user]);
+
   const handleAuthAction = async () => {
     if (user) {
       await handleLogout()
@@ -73,12 +77,15 @@ export default function Header() {
                   </Link>
                 )}
 
-                <button
-                  onClick={handleAuthAction}
-                  className="bg-black text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
-                >
-                  {user ? 'Cerrar sesión' : 'Iniciar sesión'}
-                </button>
+                {
+                  user?.role !== 'guest' &&
+                  <button
+                    onClick={handleAuthAction}
+                    className="bg-black text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
+                  >
+                    {user ? 'Cerrar sesión' : 'Iniciar sesión'}
+                  </button>
+                }
               </nav>
             </div>
           </header>
