@@ -32,7 +32,7 @@ export const createProduct = async ({
   return productId;
 };
 
-export const findAllProducts = async (userId = null, role = 'user') => {
+/* export const findAllProducts = async (userId = 0, role = 'user') => {
 
   if (role === 'admin') {
     const query = `
@@ -98,7 +98,106 @@ export const findAllProducts = async (userId = null, role = 'user') => {
       updatedAt: p.updated_at
     }));
   }
+}; */
+
+export const findAllProducts = async (userId = 0, role = 'user') => {
+  // 🔹 ADMIN: ve todos los productos
+  if (role === 'admin') {
+    const query = `
+      SELECT 
+        p.*, 
+        COALESCE(
+          JSON_AGG(JSON_BUILD_OBJECT('url', m.url))
+          FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS image_urls
+      FROM products p
+      LEFT JOIN media_urls m ON p.id = m.product_id
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `;
+    const { rows } = await pool.query(query);
+
+    return rows.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+      stock: p.stock,
+      featured: p.featured,
+      price: Number(p.price),
+      imageUrls: p.image_urls.map(img => img.url),
+      createdAt: p.created_at,
+      updatedAt: p.updated_at
+    }));
+  }
+
+  // 🔹 GUEST: solo ve los productos, sin favoritos
+  if (role === 'guest' || userId === 0) {
+    const query = `
+      SELECT 
+        p.*, 
+        COALESCE(
+          JSON_AGG(JSON_BUILD_OBJECT('url', m.url))
+          FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS image_urls
+      FROM products p
+      LEFT JOIN media_urls m ON p.id = m.product_id
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `;
+    const { rows } = await pool.query(query);
+
+    return rows.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+      stock: p.stock,
+      featured: p.featured,
+      price: Number(p.price),
+      imageUrls: p.image_urls.map(img => img.url),
+      createdAt: p.created_at,
+      updatedAt: p.updated_at
+    }));
+  }
+
+  // 🔹 USER normal
+  const query = `
+    SELECT 
+      p.*, 
+      COALESCE(
+        JSON_AGG(JSON_BUILD_OBJECT('url', m.url)) 
+        FILTER (WHERE m.id IS NOT NULL), '[]'
+      ) AS image_urls,
+      CASE 
+        WHEN f.user_id IS NOT NULL THEN true
+        ELSE false
+      END AS "isFavorite"
+    FROM products p
+    LEFT JOIN media_urls m ON p.id = m.product_id
+    LEFT JOIN favorites f 
+      ON p.id = f.product_id AND f.user_id = $1
+    GROUP BY p.id, f.user_id
+    ORDER BY p.created_at DESC
+  `;
+
+  const { rows } = await pool.query(query, [userId]);
+
+  return rows.map(p => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    category: p.category,
+    stock: p.stock,
+    featured: p.featured,
+    price: Number(p.price),
+    imageUrls: p.image_urls.map(img => img.url),
+    isFavorite: p.isFavorite,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at
+  }));
 };
+
 
 export const findPaginatedProducts = async ({ page = 1, limit = 10, category = null, userId = null, role = null }) => {
   const offset = (Number(page) - 1) * Number(limit);

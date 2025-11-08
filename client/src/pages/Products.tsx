@@ -22,10 +22,11 @@ const Products: React.FC = () => {
       setLoading(true);
       setErrorMsg(null);
 
+      const userId = user ? user.id : 0;
+
       try {
-        const response = await fetch(`${apiUrl}/products`, {
+        const response = await fetch(`${apiUrl}/products/?userId=${userId}`, {
           method: 'GET',
-          credentials: 'include',
         });
 
         if (!response.ok) {

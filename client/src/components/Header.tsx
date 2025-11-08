@@ -14,7 +14,8 @@ export default function Header() {
   }, [isMobileSize]);
 
   useEffect(() => {
-    if (user?.id) console.log(user);
+    
+    console.log(user);
   }, [user]);
 
   const handleAuthAction = async () => {
@@ -78,13 +79,21 @@ export default function Header() {
                 )}
 
                 {
-                  user?.role !== 'guest' &&
-                  <button
-                    onClick={handleAuthAction}
-                    className="bg-black text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
-                  >
-                    {user ? 'Cerrar sesión' : 'Iniciar sesión'}
-                  </button>
+                  user?.role !== 'guest' ? (
+                    <button
+                      onClick={handleAuthAction}
+                      className="bg-black text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
+                    >
+                      {user ? 'Cerrar sesión' : 'Iniciar sesión'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleAuthAction}
+                      className="bg-black text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
+                    >
+                      {'Iniciar sesión'}
+                    </button>
+                  )
                 }
               </nav>
             </div>

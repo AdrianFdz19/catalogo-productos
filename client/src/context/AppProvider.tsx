@@ -56,25 +56,27 @@ export default function AppProvider({ children }: AppProviderProps) {
 
   // Verificación de usuario al cargar app
   useEffect(() => {
+
     const verifyAuth = async () => {
+
       try {
+        // Esta ruta ahora es MÁGICA: siempre devuelve un usuario.
         const res = await fetch(`${apiUrl}/auth/verify`, {
           method: 'GET',
           credentials: 'include',
         });
 
         const data = await res.json();
+        console.log(data);
 
         if (data.success && data.user) {
+          // data.user contendrá { id: 0, username: 'Invitado', role: 'guest' } 
+          // O { id: 5, username: 'JuanPerez', role: 'user' }
           setUser(data.user);
         } else {
-          // crear guest si no hay token válido
-          const resGuest = await fetch(`${apiUrl}/auth/guest`, {
-            method: 'POST',
-            credentials: 'include',
-          });
-          const guestData = await resGuest.json();
-          setUser(guestData.user);
+          // Si la API falla por completo o el backend tiene un error, 
+          // manejamos el estado como nulo yauthLoading=false.
+          setUser(null);
         }
       } catch (err) {
         console.error('Auth verification failed:', err);
@@ -85,6 +87,7 @@ export default function AppProvider({ children }: AppProviderProps) {
     };
 
     verifyAuth();
+
   }, []);
 
 

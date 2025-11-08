@@ -26,12 +26,23 @@ export const findUserByUsernameOrEmailSignIn = async (usernameOrEmail) => {
   return result.rows[0]; // devuelve undefined si no existe
 };
 
-export const createUser = async (username, email, full_name, hashedPassword) => {
+export const createUser = async (username, email, role = 'user', full_name, hashedPassword) => {
   const result = await pool.query(
-    `INSERT INTO users (username, email, full_name, hashed_password) 
-     VALUES ($1, $2, $3, $4) 
+    `INSERT INTO users (username, email, role, full_name, hashed_password) 
+     VALUES ($1, $2, $3, $4, $5) 
      RETURNING id, username, email, full_name, role, created_at`,
-    [username, email, full_name, hashedPassword]
+    [username, email, role, full_name, hashedPassword]
+  );
+  return result.rows[0];
+};
+
+export const createGuestUser = async (username) => {
+  const result = await pool.query(
+    `INSERT INTO users (username, role) 
+     VALUES ($1, 'guest') 
+     RETURNING id, username, email, full_name, role, created_at`,
+    [username]
+    // Asume que email, full_name, hashed_password son NULLABLE en tu DB
   );
   return result.rows[0];
 };

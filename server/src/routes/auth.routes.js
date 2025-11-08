@@ -1,5 +1,5 @@
 import express from 'express'
-import { signUp, signIn, signOut, getAuthUser, createGuest } from '../controllers/auth.controller.js';
+import { signUp, signIn, signOut, getAuthUser, createGuest, getGuestById } from '../controllers/auth.controller.js';
 
 const auth = express.Router();
 
@@ -9,6 +9,7 @@ auth.post('/signin', signIn);
 auth.post('/signout', signOut);
 auth.get('/verify', getAuthUser);
 auth.post('/guest', createGuest); // crear cuenta para invitado
+auth.get('/guest/:guestId', getGuestById);
 
 export default auth;
 

@@ -3,8 +3,9 @@ import { addFavorite, createProduct, findAllProducts, findFeaturedProducts, find
 
 export const getAllProducts = async (req, res, next) => {
   try {
-    const { id: userId, role } = req.user;
-    console.log(`${role}`);
+    const { role } = req.user;
+    const userId = req.query.userId || 0;
+    console.log(`Un invitado pidio la peticion a products con id: ${userId} y role ${role}`);
 
     const products = await findAllProducts(userId, role);
     res.json(products);
