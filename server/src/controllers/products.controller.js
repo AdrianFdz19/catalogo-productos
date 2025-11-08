@@ -2,6 +2,7 @@ import { pool } from '../config/databaseConfig.js';
 import { 
   addFavorite, 
   createProduct, 
+  findAllCategories, 
   findAllProducts, 
   findFeaturedProducts, 
   findPaginatedProducts, 
@@ -253,3 +254,36 @@ export const deleteProduct = async (req, res, next) => {
     next(err);
   }
 };
+
+// Categorias
+export const getCategories = async (req, res, next) => {
+  try {
+    const data = await findAllCategories();
+
+    res.status(200).json(data);
+  } catch(err) {
+    next(err);
+  }
+}
+
+export const createNewCategory = async (req, res, next) => {
+  try {
+    const { name, description } = req.body;
+
+    if (!name) return res.status(402).json({message: 'Not name proporcioned.'});
+
+    // Verificar si ya existe este nombre de categoria en la DB.
+    const isAlreadyQuery = await pool.query(`SELECT id FROM categories WHERE name = $1`, [name]);
+    const isAlreadyExisting = isAlreadyQuery.rows[0];
+
+    if (isAlreadyExisting) return res.status(402).json({message: 'This category already exists.'});
+
+    // Crear el registro en la base de datos
+    const query = await pool.query(`INSERT INTO categories (name, description) VALUES($1, $2) RETURNING id, name, description`, [name, description]);
+    const newCategory = query.rows[0];
+
+    res.status(200).json(newCategory);
+  } catch(err) {
+    next(err);
+  }
+}

@@ -32,3 +32,9 @@ export type ProductForm = {
   featured?: boolean;
   tags: string[];
 };
+
+type Category = {
+	id: number;
+	name: string;
+	description: string;
+};

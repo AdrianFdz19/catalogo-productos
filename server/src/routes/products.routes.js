@@ -9,7 +9,9 @@ import {
     removeFromFavorites, 
     addProduct, 
     editProduct, 
-    deleteProduct 
+    deleteProduct, 
+    getCategories,
+    createNewCategory
 } from '../controllers/products.controller.js';
 
 // Asegúrate de que importas los 3 middlewares: authenticate, authorize, y optionalAuth
@@ -21,6 +23,8 @@ const products = express.Router();
 products.post('/', authenticate, authorize(['admin']), addProduct);
 products.put('/:id', authenticate, authorize(['admin']), editProduct);
 products.delete('/:id', authenticate, authorize(['admin']), deleteProduct);
+products.get('/categories', authenticate, authorize(['admin']), getCategories);
+products.post('/categories', authenticate, authorize(['admin']), createNewCategory);
 
 // Rutas públicas con autenticación opcional (catálogo para todos)
 products.get('/', authenticate, getAllProducts);
@@ -32,6 +36,7 @@ products.get('/:id', authenticate, getProductById);
 products.get('/favorites', authenticate, authorize(['user']), getUserFavorites);
 products.post('/add-favorites', authenticate, authorize(['user']), addToFavorites);
 products.post('/remove-favorites', authenticate, authorize(['user']), removeFromFavorites);
+
 
 
 export default products;

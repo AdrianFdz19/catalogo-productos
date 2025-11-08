@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { ProductForm } from '../types/products';
+import React, { useEffect, useRef, useState } from 'react';
+import { Category, ProductForm } from '../types/products';
 import AddFiles from './AddFiles';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppContext } from '../context/AppProvider';
@@ -23,6 +23,49 @@ const AddProduct: React.FC = () => {
 		tags: []
 	});
 
+	// Category 
+	const [categories, setCategories] = useState<Category[]>([]);
+	const [showCategoryModal, setShowCategoryModal] = useState(false);
+	const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+	const [loadingCategory, setLoadingCategory] = useState(false);
+	const [showCategoryToast, setShowCategoryToast] = useState(false);
+
+	const handleCreateCategory = async () => {
+		if (!newCategory.name.trim()) return;
+		setLoadingCategory(true);
+		try {
+			const response = await fetch(`${apiUrl}/products/categories`, {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(newCategory),
+			});
+
+			if (!response.ok) throw new Error('Error al crear categoría');
+
+			const data = await response.json();
+
+			// Actualizar lista de categorías
+			setCategories((prev) => [...prev, data]);
+
+			// Seleccionar automáticamente la nueva categoría
+			setFormData((prev) => ({ ...prev, category: data.name }));
+
+			// Cerrar modal y limpiar
+			setShowCategoryModal(false);
+			setNewCategory({ name: '', description: '' });
+
+			setShowCategoryToast(true);
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setLoadingCategory(false);
+		}
+	};
+
+
+
+	// Funciones
 	const handleChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
 	) => {
@@ -108,6 +151,31 @@ const AddProduct: React.FC = () => {
 		);
 	};
 
+	// Efectos secundarios
+	useEffect(() => {
+		const fetchCategories = async () => {
+			try {
+				const response = await fetch(`${apiUrl}/products/categories`, {
+					method: 'GET',
+					credentials: 'include'
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					console.log(data);
+					setCategories(data);
+				} else {
+					console.log('No hay categorias para mostrar.');
+					setCategories([]);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		};
+
+		fetchCategories();
+	}, []);
+
 	return (
 		<section className="w-full px-4 py-10 bg-white">
 			<div className="max-w-4xl mx-auto">
@@ -176,12 +244,24 @@ const AddProduct: React.FC = () => {
 								className="w-full border border-gray-300 rounded-md p-2"
 								required
 							>
-								<option value="">Selecciona una categoría</option>
-								<option value="Laptops">Laptops</option>
-								<option value="Smart Home">Hogar inteligente</option>
-								<option value="Cameras">Cámaras</option>
-								<option value="Accessories">Accesorios</option>
+								{categories.length > 0 &&
+									categories.map(cat => (
+										<option
+											key={cat.id}
+											value={cat.name}
+										>
+											{cat.name}
+										</option>
+									))
+								}
 							</select>
+							<button
+								type="button"
+								onClick={() => setShowCategoryModal(true)}
+								className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
+							>
+								+
+							</button>
 						</div>
 
 						<AddFiles
@@ -317,6 +397,62 @@ const AddProduct: React.FC = () => {
 			{showToast && (
 				<SuccessToast message="Producto agregado exitosamente" onClose={() => setShowToast(false)} />
 			)}
+			{showCategoryToast && (
+				<SuccessToast
+					message="Categoría creada exitosamente"
+					onClose={() => setShowCategoryToast(false)}
+				/>
+			)}
+			{showCategoryModal && (
+				<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+						<h3 className="text-xl font-semibold mb-4 text-gray-800">Nueva categoría</h3>
+
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Nombre
+						</label>
+						<input
+							type="text"
+							value={newCategory.name}
+							onChange={(e) =>
+								setNewCategory((prev) => ({ ...prev, name: e.target.value }))
+							}
+							className="w-full border border-gray-300 rounded-md p-2 mb-3"
+							placeholder="Ej. Ropa, Accesorios, etc."
+						/>
+
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Descripción
+						</label>
+						<textarea
+							value={newCategory.description}
+							onChange={(e) =>
+								setNewCategory((prev) => ({ ...prev, description: e.target.value }))
+							}
+							rows={3}
+							className="w-full border border-gray-300 rounded-md p-2 mb-4"
+							placeholder="Breve descripción (opcional)"
+						/>
+
+						<div className="flex justify-end gap-3">
+							<button
+								onClick={() => setShowCategoryModal(false)}
+								className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+							>
+								Cancelar
+							</button>
+							<button
+								onClick={handleCreateCategory}
+								disabled={loadingCategory}
+								className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+							>
+								{loadingCategory ? 'Guardando...' : 'Guardar'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
 		</section>
 	);
 };
