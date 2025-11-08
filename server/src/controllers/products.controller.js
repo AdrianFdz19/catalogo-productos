@@ -1,11 +1,18 @@
 import { pool } from '../config/databaseConfig.js';
-import { addFavorite, createProduct, findAllProducts, findFeaturedProducts, findPaginatedProducts, findProductById, findUserFavorites, removeFavorite } from '../models/products.models.js';
+import { 
+  addFavorite, 
+  createProduct, 
+  findAllProducts, 
+  findFeaturedProducts, 
+  findPaginatedProducts, 
+  findProductById, 
+  findUserFavorites, 
+  removeFavorite 
+} from '../models/products.models.js';
 
 export const getAllProducts = async (req, res, next) => {
   try {
-    const { role } = req.user;
-    const userId = req.query.userId || 0;
-    console.log(`Un invitado pidio la peticion a products con id: ${userId} y role ${role}`);
+    const { id: userId, role } = req.user;
 
     const products = await findAllProducts(userId, role);
     res.json(products);

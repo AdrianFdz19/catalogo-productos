@@ -2,45 +2,16 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/databaseConfig.js';
 import { env } from '../config/config.js';
-import { createGuestUser, createUser, findUser, findUserByUsernameOrEmail, findUserByUsernameOrEmailSignIn } from '../models/auth.model.js';
+import { 
+  createGuestUser, 
+  createUser, 
+  findUser, 
+  findUserByUsernameOrEmail, 
+  findUserByUsernameOrEmailSignIn 
+} from '../models/auth.model.js';
 import { v4 as uuidv4 } from "uuid";
 
 const JWT_EXPIRES_IN = '1d';
-
-/* export const getAuthUser = async (req, res, next) => {
-  try {
-    // Intentar obtener token desde cookie o header
-    const token = req.cookies?.token;
-    let decoded = null;
-
-    if (!token) {
-      return res.status(200).json({
-        success: true,
-        user: { id: 0, role: 'guest' },
-      });
-    }
-
-    // Verificar token
-    decoded = jwt.verify(token, env.secret);
-
-
-    // Buscar usuario en DB
-
-    const user = await findUser(decoded);
-
-    if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
-
-    // Enviar usuario al frontend
-    res.status(200).json({
-      success: true,
-      user,
-    });
-  } catch (err) {
-    next(err);
-  }
-}; */
 
 export const getAuthUser = async (req, res, next) => {
   try {

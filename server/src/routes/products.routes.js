@@ -1,26 +1,37 @@
-import express from 'express'
-import { getAllProducts, getFeaturedProducts, getUserFavorites, getPaginatedProducts, getProductById, addToFavorites, removeFromFavorites, addProduct, editProduct, deleteProduct } from '../controllers/products.controller.js';
-import { authToken, optionalAuth } from '../middlewares/auth.middleware.js';
+import express from 'express';
+import { 
+    getAllProducts, 
+    getFeaturedProducts, 
+    getUserFavorites, 
+    getPaginatedProducts, 
+    getProductById, 
+    addToFavorites, 
+    removeFromFavorites, 
+    addProduct, 
+    editProduct, 
+    deleteProduct 
+} from '../controllers/products.controller.js';
+
+// Asegúrate de que importas los 3 middlewares: authenticate, authorize, y optionalAuth
+import { authenticate, authorize } from '../middlewares/auth.middleware.js';
+
 const products = express.Router();
 
-products.post('/', authToken, addProduct);
+// Rutas de administración (solo admin)
+products.post('/', authenticate, authorize(['admin']), addProduct);
+products.put('/:id', authenticate, authorize(['admin']), editProduct);
+products.delete('/:id', authenticate, authorize(['admin']), deleteProduct);
 
-products.get('/', optionalAuth, getAllProducts);
+// Rutas públicas con autenticación opcional (catálogo para todos)
+products.get('/', authenticate, getAllProducts);
+products.get('/featured', authenticate, getFeaturedProducts);
+products.get('/paginated', authenticate, getPaginatedProducts);
+products.get('/:id', authenticate, getProductById);
 
-products.get('/featured', optionalAuth, getFeaturedProducts);
+// Rutas de usuario protegido (solo 'user' o 'admin')
+products.get('/favorites', authenticate, authorize(['user']), getUserFavorites);
+products.post('/add-favorites', authenticate, authorize(['user']), addToFavorites);
+products.post('/remove-favorites', authenticate, authorize(['user']), removeFromFavorites);
 
-products.get('/paginated', optionalAuth, getPaginatedProducts);
-
-products.get('/favorites', authToken, getUserFavorites);
-
-products.post('/add-favorites', authToken, addToFavorites);
-
-products.post('/remove-favorites', authToken, removeFromFavorites);
-
-products.get('/:id', optionalAuth, getProductById);
-
-products.put('/:id', authToken, editProduct);
-
-products.delete('/:id', authToken, deleteProduct);
 
 export default products;

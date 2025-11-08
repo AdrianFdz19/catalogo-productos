@@ -1,17 +1,22 @@
-import express from 'express'
-import { signUp, signIn, signOut, getAuthUser, createGuest, getGuestById } from '../controllers/auth.controller.js';
+import express from 'express';
+import { 
+    signUp, 
+    signIn, 
+    signOut, 
+    getAuthUser
+} from '../controllers/auth.controller.js';
 
 const auth = express.Router();
 
-auth.get('/', (req, res) => res.send('Auth Router is online...'));
-auth.post('/signup', signUp);
-auth.post('/signin', signIn);
-auth.post('/signout', signOut);
-auth.get('/verify', getAuthUser);
-auth.post('/guest', createGuest); // crear cuenta para invitado
-auth.get('/guest/:guestId', getGuestById);
+// Ruta de "salud" (health check) para verificar que el router funciona
+auth.get('/', (req, res) => res.status(200).json({ status: 'online', router: 'auth' }));
+
+// Rutas principales de gestión de identidad
+auth.post('/signup', signUp);   // Crear un nuevo usuario registrado
+auth.post('/signin', signIn);   // Iniciar sesión con credenciales
+auth.post('/signout', signOut); // Cerrar sesión (limpia la cookie)
+
+// Ruta de verificación de estado de autenticación
+auth.get('/verify', getAuthUser); 
 
 export default auth;
-
-
-

@@ -2,54 +2,48 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/config.js';
 import { findUser } from '../models/auth.model.js';
 
-/* let claveSecreta = env.secret || 'rb200219secretkeyfs'; */
-
-export const authToken = async (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
-
-    // verificar token
-    const decoded = jwt.verify(token, env.secret);
-
-    if (!decoded) {
-      return res.status(401).json({ success: false, message: 'No token provided' });
+    
+    if (!token) {
+      // Si no hay token, el usuario NO está autenticado para esta RUTA protegida.
+      return res.status(401).json({ message: 'Autenticación requerida. Inicie sesión.' });
     }
 
-    // Buscar usuario en DB
+    const decoded = jwt.verify(token, env.secret);
+
+    // Buscar usuario en DB para asegurarnos de que el usuario existe y está activo
     const user = await findUser(decoded);
 
     if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+      return res.status(401).json({ message: 'Usuario no encontrado o token inválido.' });
     }
 
-    req.user = user;
-
-    next();
+    // Adjuntar el objeto user al request para que los siguientes middlewares y controladores puedan usarlo
+    req.user = user; 
+    
+    next(); // Pasar al siguiente middleware o controlador
 
   } catch (err) {
-    console.error('Error verifying token:', err);
-    res.status(401).json({ success: false, message: 'Token inválido o expirado' });
+    // Manejar errores de JWT (ej. token expirado o corrupto)
+    return res.status(401).json({ message: 'Token inválido o expirado.' });
   }
 };
 
-export const optionalAuth = (req, res, next) => {
-  const token = req.cookies.token;
+// authorize toma un array de roles permitidos (ej. ['user', 'admin'])
+export const authorize = (allowedRoles) => {
+  return (req, res, next) => {
+    // Asumimos que el middleware 'authenticate' ya se ejecutó y adjuntó req.user
+    const userRole = req.user?.role; // Accedemos al rol del usuario adjunto
 
-  if (!token) {
-    console.log(`Un invitado desea ver los productos`);
-    req.user = { id: 0, role: 'guest' };
-    return next();
-  }
-
-  console.log(`Un usuario real desea ver los productos`);
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      req.user = { id: 0, role: 'guest' };
-    } else {
-      req.user = user;
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      // El rol del usuario no está en la lista de permitidos
+      return res.status(403).json({ message: 'Permisos insuficientes. Acceso denegado.' });
     }
+
+    // El usuario tiene el rol adecuado, permitir acceso
     next();
-  });
+  };
 };
 
