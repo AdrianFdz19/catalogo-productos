@@ -20,7 +20,7 @@ const AddProduct: React.FC = () => {
         name: '',
         description: '',
         price: 0,
-        category: '',
+        categoryId: null,
         stock: 0,
         imageUrls: [],
         featured: false,
@@ -53,7 +53,7 @@ const AddProduct: React.FC = () => {
             setCategories((prev) => [...prev, data]);
 
             // Seleccionar automáticamente la nueva categoría
-            setFormData((prev) => ({ ...prev, category: data.name }));
+            setFormData((prev) => ({ ...prev, categoryId: data.id }));
 
             // Cerrar modal y limpiar
             setShowCategoryModal(false);
@@ -83,7 +83,7 @@ const AddProduct: React.FC = () => {
                         name: data.name,
                         description: data.description,
                         price: Number(data.price),
-                        category: data.category,
+                        categoryId: data.categoryId,
                         stock: Number(data.stock),
                         imageUrls: data.images,
                         featured: data.featured,
@@ -158,6 +158,7 @@ const AddProduct: React.FC = () => {
             /* Subir el articulo completo con la URL de las imagenes */
             const productToSend = {
                 ...formData,
+                categoryId: Number(formData.categoryId),
                 imageUrls: uploadedUrls,
             };
 
@@ -177,7 +178,7 @@ const AddProduct: React.FC = () => {
                     name: '',
                     description: '',
                     price: 0,
-                    category: '',
+                    categoryId: null,
                     stock: 0,
                     imageUrls: [],
                     featured: false,
@@ -274,17 +275,18 @@ const AddProduct: React.FC = () => {
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
                             <select
-                                name="category"
-                                value={formData.category}
+                                name="categoryId"
+                                value={formData.categoryId || ''}
                                 onChange={handleChange}
                                 className="w-full border border-gray-300 rounded-md p-2"
                                 required
                             >
+                                <option value="">Selecciona una categoría</option>
                                 {categories.length > 0 &&
                                     categories.map(cat => (
                                         <option
                                             key={cat.id}
-                                            value={cat.name}
+                                            value={cat.id}
                                         >
                                             {cat.name}
                                         </option>
@@ -432,7 +434,7 @@ const AddProduct: React.FC = () => {
                 </div>
             </div>
             {showToast && (
-                <SuccessToast message="Producto agregado exitosamente" onClose={() => setShowToast(false)} />
+                <SuccessToast message="Producto actualizado exitosamente" onClose={() => setShowToast(false)} />
             )}
             {showCategoryToast && (
                 <SuccessToast

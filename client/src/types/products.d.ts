@@ -26,7 +26,7 @@ export type ProductForm = {
   name: string;
   description: string;
   price: number;
-  category: string;
+  categoryId: number | null;
   stock: number;
   imageUrls: (File | string)[];
   featured?: boolean;

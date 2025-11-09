@@ -131,13 +131,13 @@ export const addProduct = async (req, res, next) => {
       name,
       description,
       price,
-      category,
+      categoryId,
       stock,
       featured,
       imageUrls, // array de strings ya subidas a Cloudinary
     } = req.body;
 
-    if (!name || !description || !price || !category || !stock || !imageUrls?.length) {
+    if (!name || !description || !price || !categoryId || !stock || !imageUrls?.length) {
       return res.status(400).json({ message: 'Faltan campos obligatorios o imágenes.' });
     }
 
@@ -145,7 +145,7 @@ export const addProduct = async (req, res, next) => {
       name,
       description,
       price,
-      category,
+      categoryId,
       stock,
       featured,
       imageUrls,
@@ -166,9 +166,9 @@ export const editProduct = async (req, res, next) => {
     if (role !== 'admin') return res.status(403).json({ message: 'No tienes permisos de administrador' });
 
     const { id } = req.params;
-    const { name, description, price, category, stock, featured, imageUrls } = req.body;
+    const { name, description, price, categoryId, stock, featured, imageUrls } = req.body; // Modificar addproduct con category id desde aqui.
 
-    if (!name || !description || price == null || !category || stock == null || !imageUrls?.length) {
+    if (!name || !description || price == null || !categoryId || stock == null || !imageUrls?.length) {
       return res.status(400).json({ message: 'Faltan campos obligatorios o imágenes.' });
     }
 
@@ -176,9 +176,9 @@ export const editProduct = async (req, res, next) => {
 
     await client.query(
       `UPDATE products
-       SET name=$1, description=$2, price=$3, category=$4, stock=$5, featured=$6
+       SET name=$1, description=$2, price=$3, category_id=$4, stock=$5, featured=$6
        WHERE id=$7`,
-      [name, description, price, category, stock, featured, id]
+      [name, description, price, categoryId, stock, featured, id]
     );
 
     await client.query('DELETE FROM media_urls WHERE product_id = $1', [id]);

@@ -16,7 +16,7 @@ const AddProduct: React.FC = () => {
 		name: '',
 		description: '',
 		price: 0,
-		category: '',
+		categoryId: null,
 		stock: 0,
 		imageUrls: [],
 		featured: false,
@@ -49,7 +49,7 @@ const AddProduct: React.FC = () => {
 			setCategories((prev) => [...prev, data]);
 
 			// Seleccionar automáticamente la nueva categoría
-			setFormData((prev) => ({ ...prev, category: data.name }));
+			setFormData((prev) => ({ ...prev, categoryId: data.id }));
 
 			// Cerrar modal y limpiar
 			setShowCategoryModal(false);
@@ -124,7 +124,7 @@ const AddProduct: React.FC = () => {
 				name: '',
 				description: '',
 				price: 0,
-				category: '',
+				categoryId: null,
 				stock: 0,
 				imageUrls: [],
 				featured: false,
@@ -238,17 +238,18 @@ const AddProduct: React.FC = () => {
 						<div>
 							<label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
 							<select
-								name="category"
-								value={formData.category}
+								name="categoryId"
+								value={formData.categoryId || ''}
 								onChange={handleChange}
 								className="w-full border border-gray-300 rounded-md p-2"
 								required
 							>
+								<option value="">Selecciona una categoría</option>
 								{categories.length > 0 &&
 									categories.map(cat => (
 										<option
 											key={cat.id}
-											value={cat.name}
+											value={cat.id} // tomar como valor el propio id de la categoria.
 										>
 											{cat.name}
 										</option>

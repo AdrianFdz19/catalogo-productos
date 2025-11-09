@@ -4,16 +4,16 @@ export const createProduct = async ({
   name,
   description,
   price,
-  category,
+  categoryId,
   stock,
   featured,
   imageUrls = [],
 }) => {
   // Insertar producto
   const productResult = await pool.query(
-    `INSERT INTO products (name, description, price, category, stock, featured)
+    `INSERT INTO products (name, description, price, category_id, stock, featured)
      VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-    [name, description, price, category, stock, featured]
+    [name, description, price, categoryId, stock, featured]
   );
 
   const productId = productResult.rows[0].id;
