@@ -1,5 +1,87 @@
 import { pool } from "../config/databaseConfig.js";
 
+export const findProducts = async ({ featured, page, limit, category, search, userId, role }) => {
+  const offset = (page - 1) * limit;
+  const params = [];
+  const whereClauses = [];
+
+  console.log(featured, page, limit, category, search);
+
+  // 1️⃣ Filtros dinámicos
+  if (featured) whereClauses.push("p.featured = true");
+
+  if (category) {
+    params.push(category);
+    whereClauses.push(`c.slug = $${params.length}`);
+  }
+
+  if (search) {
+    params.push(`%${search.toLowerCase()}%`);
+    whereClauses.push(`LOWER(p.name) LIKE $${params.length}`);
+  }
+
+  // 🔹 Unificamos el WHERE final
+  const where = whereClauses.length ? "WHERE " + whereClauses.join(" AND ") : "";
+
+  // 2️⃣ Query según el rol
+  const isAdmin = role === "admin";
+
+  const query = `
+    SELECT 
+      p.*,
+      c.name AS category_name,
+      COALESCE(
+        JSON_AGG(JSON_BUILD_OBJECT('url', m.url))
+        FILTER (WHERE m.id IS NOT NULL), '[]'
+      ) AS image_urls
+      ${isAdmin ? "" : `, CASE WHEN f.user_id IS NOT NULL THEN true ELSE false END AS "isFavorite"`}
+    FROM products p
+    LEFT JOIN media_urls m ON p.id = m.product_id
+    LEFT JOIN categories c ON p.category_id = c.id
+    ${!isAdmin ? `LEFT JOIN favorites f ON p.id = f.product_id AND f.user_id = $${params.length + 1}` : ""}
+    ${where}
+    GROUP BY p.id, c.name ${!isAdmin ? ", f.user_id" : ""}
+    ORDER BY p.created_at DESC
+    LIMIT $${params.length + (isAdmin ? 1 : 2)} OFFSET $${params.length + (isAdmin ? 2 : 3)}
+  `;
+
+  const queryValues = isAdmin
+    ? [...params, limit, offset]
+    : [...params, userId, limit, offset];
+
+  const result = await pool.query(query, queryValues);
+
+  // Conteo total (también usa el mismo WHERE)
+  const countQuery = `
+    SELECT COUNT(*) 
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    ${where}
+  `;
+  const totalRes = await pool.query(countQuery, params);
+
+  const total = parseInt(totalRes.rows[0].count);
+
+  const products = result.rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    category: p.category_name,
+    categoryId: p.category_id,
+    stock: p.stock,
+    featured: p.featured,
+    price: Number(p.price),
+    imageUrls: p.image_urls.map((img) => img.url),
+    isFavorite: isAdmin ? undefined : p.isFavorite,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
+  }));
+
+  return { products, total, page, limit };
+};
+
+
+
 export const createProduct = async ({
   name,
   description,
@@ -385,11 +467,11 @@ export const findProductById = async (productId, userId = null, role = 'user') =
 
 export const findAllCategories = async () => {
   try {
-    const query = `SELECT id, name, description FROM categories`;
+    const query = `SELECT id, name, description, slug FROM categories`;
     const result = await pool.query(query);
     const categories = result.rows;
     return categories;
-  } catch(err) {
+  } catch (err) {
     next(err);
   }
 };

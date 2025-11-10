@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { CiMenuBurger } from "react-icons/ci"
 import { IoCloseOutline } from "react-icons/io5"
 import { useAppContext } from '../../context/AppProvider'
+import useFetchCategories from '../../hooks/useFetchCategories'
 
 export default function HeaderMobile() {
     const [menuOpen, setMenuOpen] = useState(false)
     const navigate = useNavigate();
-    const { user, handleLogout } = useAppContext();
+    const { user, handleLogout, apiUrl } = useAppContext();
+    const { categories } = useFetchCategories({ apiUrl });
 
     const toggleMenu = () => setMenuOpen(!menuOpen)
 
@@ -19,13 +21,6 @@ export default function HeaderMobile() {
       navigate('/signin')
     }
   }
-
-    const categories = [
-        { name: "Todos los productos", path: "/" },
-        { name: "Laptops", path: "/categoria/laptops" },
-        { name: "Cámaras", path: "/categoria/camaras" },
-        { name: "Smart Home", path: "/categoria/smart-home" },
-    ]
 
     return (
         <header className="w-full bg-white shadow-sm border-b border-gray-100 sticky top-0 z-30">
@@ -100,7 +95,7 @@ export default function HeaderMobile() {
                     {categories.map((cat, index) => (
                         <Link
                             key={index}
-                            to={cat.path}
+                            to={cat.slug}
                             onClick={() => setMenuOpen(false)}
                             className="text-gray-800 text-xl font-medium hover:text-blue-600 transition-colors"
                         >

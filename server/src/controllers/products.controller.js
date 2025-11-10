@@ -1,15 +1,36 @@
 import { pool } from '../config/databaseConfig.js';
-import { 
-  addFavorite, 
-  createProduct, 
-  findAllCategories, 
-  findAllProducts, 
-  findFeaturedProducts, 
-  findPaginatedProducts, 
-  findProductById, 
-  findUserFavorites, 
-  removeFavorite 
+import {
+  addFavorite,
+  createProduct,
+  findAllCategories,
+  findAllProducts,
+  findFeaturedProducts,
+  findPaginatedProducts,
+  findProductById,
+  findProducts,
+  findUserFavorites,
+  removeFavorite
 } from '../models/products.models.js';
+
+export const getProducts = async (req, res, next) => {
+  try {
+    const {
+      featured = null,
+      page = 1,
+      limit = 10,
+      category = null,
+      search = null,
+    } = req.query;
+
+    const { id: userId = null, role = "guest" } = req.user || {};
+
+    const data = await findProducts({ featured, page, limit, category, search, userId, role });
+
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const getAllProducts = async (req, res, next) => {
   try {
@@ -50,6 +71,7 @@ export const getFeaturedProducts = async (req, res) => {
 export const getUserFavorites = async (req, res) => {
   try {
     const userId = req.user?.id;
+    console.log(userId, 'FAVORITOS');
 
     const favorites = await findUserFavorites(userId);
 
@@ -109,6 +131,11 @@ export const removeFromFavorites = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    if (isNaN(id)) {
+      return res.status(400).json({ message: 'ID de producto inválido' });
+    }
+
     const userId = req.user?.id || null;
     const role = req.user?.role || 'user';
 
@@ -261,7 +288,7 @@ export const getCategories = async (req, res, next) => {
     const data = await findAllCategories();
 
     res.status(200).json(data);
-  } catch(err) {
+  } catch (err) {
     next(err);
   }
 }
@@ -270,20 +297,39 @@ export const createNewCategory = async (req, res, next) => {
   try {
     const { name, description } = req.body;
 
-    if (!name) return res.status(402).json({message: 'Not name proporcioned.'});
+    if (!name)
+      return res.status(400).json({ message: 'Name not provided.' });
 
-    // Verificar si ya existe este nombre de categoria en la DB.
-    const isAlreadyQuery = await pool.query(`SELECT id FROM categories WHERE name = $1`, [name]);
-    const isAlreadyExisting = isAlreadyQuery.rows[0];
+    // Verificar si ya existe este nombre de categoría
+    const existsQuery = await pool.query(
+      `SELECT id FROM categories WHERE name = $1`,
+      [name]
+    );
+    if (existsQuery.rows[0])
+      return res.status(409).json({ message: 'This category already exists.' });
 
-    if (isAlreadyExisting) return res.status(402).json({message: 'This category already exists.'});
+    // 🧠 Generar el slug
+    const slug = name
+      .toLowerCase()
+      .normalize("NFD") // elimina acentos
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "") // elimina caracteres especiales
+      .trim()
+      .replace(/\s+/g, "-"); // reemplaza espacios por guiones
 
-    // Crear el registro en la base de datos
-    const query = await pool.query(`INSERT INTO categories (name, description) VALUES($1, $2) RETURNING id, name, description`, [name, description]);
-    const newCategory = query.rows[0];
+    // Insertar nueva categoría
+    const insertQuery = await pool.query(
+      `INSERT INTO categories (name, slug, description)
+       VALUES ($1, $2, $3)
+       RETURNING id, name, slug, description`,
+      [name, slug, description]
+    );
 
-    res.status(200).json(newCategory);
-  } catch(err) {
+    const newCategory = insertQuery.rows[0];
+    res.status(201).json(newCategory);
+
+  } catch (err) {
     next(err);
   }
-}
+};
+

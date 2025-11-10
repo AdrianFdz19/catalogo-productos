@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Product } from '../types/products';
+import { Category, Product } from '../types/products';
 import ProductCard from '../components/ProductCard';
 import { useAppContext } from '../context/AppProvider';
 import SearchBar from '../components/SearchBar';
 import ProductFilter from '../components/ProductFilter';
+import useFetchCategories from '../hooks/useFetchCategories';
+import { useDebounce } from '../hooks/useDebounce';
 
 const Products: React.FC = () => {
   const { apiUrl, user } = useAppContext();
@@ -12,20 +14,24 @@ const Products: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { categories } = useFetchCategories({ apiUrl });
+  const debouncedSearch = useDebounce(search, 400);
 
   useEffect(() => {
-
     if (!user || !user.id || !user.role) return;
 
     const fetchProducts = async () => {
-
       setLoading(true);
       setErrorMsg(null);
 
       try {
-        const response = await fetch(`${apiUrl}/products/`, {
+        const params = new URLSearchParams();
+        if (selectedCategory) params.append('category', selectedCategory);
+        if (debouncedSearch) params.append('search', debouncedSearch);
+
+        const response = await fetch(`${apiUrl}/products?${params.toString()}`, {
           method: 'GET',
-          credentials: 'include'
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -34,12 +40,8 @@ const Products: React.FC = () => {
         }
 
         const result = await response.json();
-
-        if (!Array.isArray(result)) {
-          throw new Error('Formato de respuesta inesperado');
-        }
-        console.log(result);
-        setProducts(result);
+        console.log(result.products);
+        setProducts(result.products || []);
       } catch (err: any) {
         console.error('Error cargando productos:', err);
         setErrorMsg(
@@ -53,16 +55,7 @@ const Products: React.FC = () => {
     };
 
     fetchProducts();
-  }, [apiUrl, user]);
-
-  // 🔍 Filtrado de productos
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory
-      ? p.category.toLowerCase() === selectedCategory.toLowerCase()
-      : true;
-    return matchesSearch && matchesCategory;
-  });
+  }, [apiUrl, user, selectedCategory, debouncedSearch]);
 
   // 🔹 Mensaje mientras user se carga
   if (!user) {
@@ -84,7 +77,7 @@ const Products: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <SearchBar search={search} setSearch={setSearch} />
           <ProductFilter
-            categories={Array.from(new Set(products.map((p) => p.category)))}
+            categories={categories}
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
           />
@@ -102,8 +95,8 @@ const Products: React.FC = () => {
         {/* 🔹 Lista de productos */}
         {!loading && !errorMsg && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
+            {products.length > 0 ? (
+              products.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}

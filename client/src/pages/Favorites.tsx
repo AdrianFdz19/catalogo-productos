@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import { Product } from '../types/products';
 
 const Favorites: React.FC = () => {
-  const { apiUrl } = useAppContext();
+  const { apiUrl, user } = useAppContext();
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,7 +43,7 @@ const Favorites: React.FC = () => {
         {favorites && favorites.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {favorites.map((product) => (
-              <ProductCard key={product.id} product={product} apiUrl={apiUrl} />
+              <ProductCard key={product.id} product={product} apiUrl={apiUrl} userRole={user?.role} />
             ))}
           </div>
         ) : (

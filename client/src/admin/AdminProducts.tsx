@@ -8,6 +8,7 @@ import { MdEdit } from "react-icons/md";
 import { MdOpenInNew } from "react-icons/md";
 import DeleteModal from './DeleteModal';
 import SuccessToast from '../components/SuccessToast';
+import { Category } from '../types/products';
 
 
 const AdminProducts: React.FC = () => {
@@ -22,7 +23,8 @@ const AdminProducts: React.FC = () => {
 	const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 	const [page, setPage] = useState(1);
 	const [total, setTotal] = useState(0);
-	const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+	const [selectedCategory, setSelectedCategory] = useState<string>('');
+	const [categories, setCategories] = useState<Category[]>([]);
 	const limit = 5;
 	const navigate = useNavigate();
 	const [contextMenu, setContextMenu] = useState<{
@@ -31,6 +33,14 @@ const AdminProducts: React.FC = () => {
 		visible: boolean;
 		product: MappedProduct | null;
 	}>({ x: 0, y: 0, visible: false, product: null });
+	const [products, setProducts] = useState<MappedProduct[]>([]);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [debouncedQuery, setDebouncedQuery] = useState('');
+
+	useEffect(() => {
+		const handler = setTimeout(() => setDebouncedQuery(searchQuery), 400); // debounce de 400ms
+		return () => clearTimeout(handler);
+	}, [searchQuery]);
 
 	useEffect(() => {
 		const handleClick = () => {
@@ -43,18 +53,50 @@ const AdminProducts: React.FC = () => {
 		return () => window.removeEventListener('click', handleClick);
 	}, [contextMenu.visible]);
 
-
-	const [products, setProducts] = useState<MappedProduct[]>([]);
-
 	useEffect(() => {
-		const fetchPaginatedProducts = async () => {
-			console.log(`Se buscara productos de la categoria: ${selectedCategory}. pagina ${page}, limite de ${limit}`);
-
+		const fetchCategories = async () => {
 			try {
-				const res = await fetch(`${apiUrl}/products/paginated?page=${page}&limit=${limit}&category=${selectedCategory}`, {
+				const response = await fetch(`${apiUrl}/products/categories`, {
 					method: 'GET',
 					credentials: 'include'
 				});
+
+				if (response.ok) {
+					const data = await response.json();
+					console.log(data);
+					setCategories(data);
+				} else {
+					console.log('No hay categorias para mostrar.');
+					setCategories([]);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		};
+
+		fetchCategories();
+	}, []);
+
+	useEffect(() => {
+		const fetchPaginatedProducts = async () => {
+			const isFeaturedFilter = selectedCategory === 'Destacados';
+			const categoryParam =
+				selectedCategory && !isFeaturedFilter ? `&category=${selectedCategory}` : '';
+			const searchParam = debouncedQuery ? `&search=${debouncedQuery}` : '';
+
+			try {
+				const res = await fetch(`${apiUrl}/products/?page=${page}&limit=${limit}${categoryParam}${searchParam}${isFeaturedFilter ? '&featured=true' : ''}`, {
+					method: 'GET',
+					credentials: 'include'
+				});
+
+				if (!res.ok) {
+					console.warn('No se pudieron obtener los productos.');
+					setProducts([]);
+					setTotal(0);
+					return;
+				}
+
 				const data = await res.json();
 
 				let mappedProducts = data.products.map((product: any) => ({
@@ -69,17 +111,16 @@ const AdminProducts: React.FC = () => {
 				}));
 
 				console.log(mappedProducts);
-
-
 				setProducts(mappedProducts);
-				setTotal(data.total); // Puedes ajustar el total si usas paginación con filtros reales
+				setTotal(data.total);
+
 			} catch (err) {
 				console.error('❌ Error al obtener productos paginados:', err);
 			}
 		};
 
 		fetchPaginatedProducts();
-	}, [page, selectedCategory]);
+	}, [page, selectedCategory, debouncedQuery]);
 
 	// Eliminar un producto
 	const handleDelete = async (productId: number) => {
@@ -133,6 +174,7 @@ const AdminProducts: React.FC = () => {
 					<div className="flex items-center gap-3 flex-wrap">
 						<input
 							type="text"
+							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Buscar producto..."
 							className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
 						/>
@@ -151,12 +193,15 @@ const AdminProducts: React.FC = () => {
 							}}
 							className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
 						>
-							<option value="Todos">Todos los productos</option>
+							<option value="">Todos los productos</option>
 							<option value="Destacados">Destacados</option>
-							<option value="Laptops">Laptops</option>
-							<option value="Smart Home">Smart Home</option>
-							<option value="Cameras">Cámaras</option>
-							<option value="Accessories">Accesorios</option>
+							{categories.length > 0 &&
+								<>
+									{categories.map(cat => (
+										<option key={cat.id} value={cat.slug}>{cat.name}</option>
+									))}
+								</>
+							}
 						</select>
 
 						<button

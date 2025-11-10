@@ -33,8 +33,9 @@ export type ProductForm = {
   tags: string[];
 };
 
-type Category = {
+export type Category = {
 	id: number;
 	name: string;
 	description: string;
+  slug: string;
 };
