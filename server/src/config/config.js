@@ -11,7 +11,8 @@ export const env = {
     name: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
-    url: process.env.DATABASE_URL
+    ext_url: process.env.EXTERNAL_DATABASE_URL,
+    int_url: process.env.INTERNAL_DATABASE_URL
   },
   cloudinary: {
     name: process.env.CLOUDINARY_CLOUD_NAME,

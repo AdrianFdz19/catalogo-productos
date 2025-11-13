@@ -6,7 +6,7 @@ export let pool;
 
 if (env.nodeEnv === 'production') {
     pool = new Pool({
-        connectionString: env.db.url,
+        connectionString: env.db.int_url,
     })
 } else {
     pool = new Pool({
