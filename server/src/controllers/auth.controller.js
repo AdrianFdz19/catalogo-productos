@@ -50,7 +50,7 @@ export const getAuthUser = async (req, res, next) => {
     res.cookie('token', guestToken, {
       httpOnly: true,
       secure: env.nodeEnv === 'production',
-      sameSite: 'Lax',
+      sameSite: env.nodeEnv === 'production' ? 'none' : 'lax',
       maxAge: 1000 * 60 * 60 * 24 * 7 // 7 días
     });
 
@@ -96,7 +96,7 @@ export const signUp = async (req, res, next) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: env.nodeEnv === 'production',
-      sameSite: 'lax',
+      sameSite: env.nodeEnv === 'production' ? 'none' : 'lax',
       maxAge: 3600 * 1000,
     });
 
@@ -133,7 +133,7 @@ export const signIn = async (req, res, next) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: env.nodeEnv === 'production',
-      sameSite: 'lax',
+      sameSite: env.nodeEnv === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 día
     }).json({
       message: 'Inicio de sesión exitoso',
@@ -158,7 +158,7 @@ export const signOut = (req, res, next) => {
   res.clearCookie('token', {
     httpOnly: true,
     secure: env.nodeEnv === 'production',
-    sameSite: 'lax',
+    sameSite: env.nodeEnv === 'production' ? 'none' : 'lax',
   });
   res.json({ success: true });
 };
@@ -189,7 +189,7 @@ export const createGuest = async (req, res) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: env.nodeEnv === "production",
-      sameSite: "lax",
+      sameSite: env.nodeEnv === 'production' ? 'none' : 'lax',
     });
 
     res.json({
