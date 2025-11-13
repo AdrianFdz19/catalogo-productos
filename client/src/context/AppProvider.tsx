@@ -40,6 +40,8 @@ export default function AppProvider({ children }: AppProviderProps) {
   const [isAuthLoading, setAuthLoading] = useState<boolean>(true);
   const apiUrl = import.meta.env.VITE_API_URL;
 
+  console.log(apiUrl);
+
   const handleLogout = async () => {
     try {
       const res = await fetch(`${apiUrl}/auth/signout`, {
