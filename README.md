@@ -115,4 +115,64 @@ npm install
 cd server
 npm install
 ```
+## ⚙️ Configuración de Variables de Entorno
+Crea un archivo .env dentro de la carpeta server:
+
+PORT=3000
+DATABASE_URL=postgres://user:password@host/db
+JWT_SECRET=tu_clave_secreta
+NODE_ENV=development
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+En el frontend, crea un archivo .env dentro de client:
+
+VITE_API_URL=http://localhost:3000
+
+## 🗃️ Base de Datos (PostgreSQL)
+
+Este proyecto utiliza PostgreSQL.
+Estas son las tablas y sus campos:
+
+### users
+- id SERIAL PRIMARY KEY
+- username
+- email
+- full_name
+- role
+- hashed_password
+- created_at
+- updated_at
+
+### categories
+- id SERIAL PRIMARY KEY
+- name
+- slug
+- created_at
+- updated_at
+
+### products
+- id SERIAL PRIMARY KEY
+- name
+- description
+- price
+- stock
+- category_id (FK → categories.id)
+- created_at
+- updated_at
+
+### media_urls
+- id SERIAL PRIMARY KEY
+- product_id (FK → products.id)
+- url
+- created_at
+
+### favorites
+- id SERIAL PRIMARY KEY
+- user_id (FK → users.id)
+- product_id (FK → products.id)
+
 
