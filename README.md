@@ -103,23 +103,15 @@ client/
 git clone https://github.com/AdrianFdz19/catalogo-productos.git
 cd catalogo-productos
 
-### 2.- Instalar dependencias
-
-```sh
-cd server 
+2️⃣ Instalar dependencias (Backend)
+cd server
 npm install
 
-### Frontend
-
-```sh
+3️⃣ Instalar dependencias (Frontend)
 cd client
 npm install
 
----
-
-### Variables de Entorno
-
-**Backend (.env)**
+### **Backend (.env)**
 
 PORT=3000
 DATABASE_URL=postgres://user:password@host/db
@@ -129,7 +121,7 @@ CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 
-**Frontend (.env)**
+### **Frontend (.env)**
 
 VITE_API_URL=http://localhost:3000
 
