@@ -102,5 +102,17 @@ client/
 ```sh
 git clone https://github.com/AdrianFdz19/catalogo-productos.git
 cd catalogo-productos
+```
 
+2️⃣ Instalar dependencias (Backend)
+```sh
+cd server
+npm install
+```
+
+3️⃣ Instalar dependencias (Frontend)
+```sh
+cd server
+npm install
+```
 
