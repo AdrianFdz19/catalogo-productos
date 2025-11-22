@@ -67,3 +67,110 @@ El proyecto está desplegado con **Netlify (cliente)** y **Render (API)**, usand
 ## 🗂️ Estructura del Proyecto
 
 ### **Backend**
+
+server/
+├── src/
+│ ├── index.js
+│ ├── app.js
+│ ├── routes/
+│ ├── controllers/
+│ ├── middleware/
+│ ├── db/
+│ └── utils/
+├── package.json
+└── .env
+
+### **Frontend*
+
+client/
+├── src/
+│ ├── components/
+│ ├── pages/
+│ ├── context/
+│ ├── hooks/
+│ └── services/
+├── vite.config.js
+├── package.json
+└── .env
+
+---
+
+## 🔧 Instalación Local
+
+### 1️⃣ Clonar el repositorio
+
+```sh
+git clone https://github.com/AdrianFdz19/catalogo-productos.git
+cd catalogo-productos
+
+### 2.- Instalar dependencias
+
+```sh
+cd server 
+npm install
+
+### Frontend
+
+```sh
+cd client
+npm install
+
+---
+
+### Variables de Entorno
+
+**Backend (.env)**
+
+PORT=3000
+DATABASE_URL=postgres://user:password@host/db
+JWT_SECRET=tu_clave_secreta
+NODE_ENV=development
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+**Frontend (.env)**
+
+VITE_API_URL=http://localhost:3000
+
+---
+
+## 🗃️ Base de Datos
+
+### **users**
+- id SERIAL PRIMARY KEY  
+- username  
+- email  
+- full_name  
+- role  
+- hashed_password  
+- created_at  
+- updated_at  
+
+### **categories**
+- id SERIAL PRIMARY KEY  
+- name  
+- slug  
+- created_at  
+- updated_at  
+
+### **products**
+- id SERIAL PRIMARY KEY  
+- name  
+- description  
+- price  
+- stock  
+- category_id (FK → categories.id)  
+- created_at  
+- updated_at  
+
+### **media_urls**
+- id SERIAL PRIMARY KEY  
+- product_id (FK → products.id)  
+- url  
+- created_at  
+
+### **favorites**
+- id SERIAL PRIMARY KEY  
+- user_id (FK → users.id)  
+- product_id (FK → products.id)
